@@ -100,6 +100,7 @@ class EnvConfigTest {
         assertEquals(3, EnvConfig.initConfig(testConfigC).getInt("a", 3))
         assertEquals(true, EnvConfig.initConfig(testConfigB).getBoolean("c", true))
         assertNotEquals("3", EnvConfig.initConfig(testConfigA).getString("a", "3"))
+        assertEquals(emptyList(), EnvConfig.initConfig(testConfigA).getList("f", emptyList()))
     }
 
     companion object {

@@ -76,11 +76,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the default property for provided key or defaultVal if it doesn't exist
      */
-    fun getBoolean(propertyKey: String, defaultVal: Boolean): Boolean {
-        val value = getBooleanInternal(environment, propertyKey) ?: getBooleanInternal(DEFAULT_ENVIRONMENT, propertyKey)
-
-        return value ?: defaultVal
-    }
+    fun getBoolean(propertyKey: String, defaultVal: Boolean): Boolean = getBoolean(propertyKey) ?: defaultVal
 
     /**
      * Gets int property from config with default fallback
@@ -88,11 +84,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the int property for provided key or defaultVal if it doesn't exist
      */
-    fun getInt(propertyKey: String, defaultVal: Int): Int {
-        val value = getIntInternal(environment, propertyKey) ?: getIntInternal(DEFAULT_ENVIRONMENT, propertyKey)
-
-        return value ?: defaultVal
-    }
+    fun getInt(propertyKey: String, defaultVal: Int): Int = getInt(propertyKey) ?: defaultVal
 
     /**
      * Gets list property from config with default fallback
@@ -100,11 +92,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the list property for provided key or defaultVal if it doesn't exist
      */
-    fun getList(propertyKey: String, defaultVal: List<String>): List<String> {
-        val value = getListInternal(environment, propertyKey) ?: getListInternal(DEFAULT_ENVIRONMENT, propertyKey)
-
-        return value ?: defaultVal
-    }
+    fun getList(propertyKey: String, defaultVal: List<String>): List<String> = getList(propertyKey) ?: defaultVal
 
     /**
      * Gets string property from config with default fallback
@@ -112,11 +100,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the string property for provided key or defaultVal if it doesn't exist
      */
-    fun getString(propertyKey: String, defaultVal : String): String {
-        val value = getStringInternal(environment, propertyKey) ?: getStringInternal(DEFAULT_ENVIRONMENT, propertyKey)
-
-        return value ?: defaultVal
-    }
+    fun getString(propertyKey: String, defaultVal : String): String = getString(propertyKey) ?: defaultVal
 
     private fun getBooleanInternal(environment: String, propertyKey: String): Boolean? =
         getStringInternal(environment, propertyKey)?.toBoolean()
