@@ -1,0 +1,73 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.70'
+    id 'java-library'
+    id 'maven-publish'
+    id "com.jfrog.artifactory" version "4.14.1"
+    id 'net.researchgate.release' version '2.8.1'
+}
+
+group = 'de.sharpmind.ktor'
+
+repositories {
+    mavenCentral()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "io.ktor:ktor-server-core:$ktor_version"
+    testImplementation "io.ktor:ktor-server-tests:$ktor_version"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+release {
+    /*failOnCommitNeeded = false
+    failOnUnversionedFiles = false
+    failOnUpdateNeeded = false*/
+
+    git {
+        commitVersionFileOnly = true
+    }
+}
+
+afterReleaseBuild.dependsOn artifactoryPublish
+beforeReleaseBuild.dependsOn clean
+
+
+artifactory {
+    contextUrl = "$artifactory_contextURL"
+    publish {
+        repository {
+            repoKey = "libs-release-local"
+            maven = true
+            username = "$artifactory_username"
+            password = "$artifactory_password"
+        }
+        defaults {
+            publications('mavenJava')
+
+            publishBuildInfo = true
+            publishArtifacts = true
+            publishPom = true
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+            maven = true
+        }
+    }
+}

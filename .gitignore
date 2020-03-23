@@ -1,0 +1,12 @@
+# ignore for this project
+
+# output dirs
+build/
+out/
+
+# gradle
+.gradle/
+
+# IDEs
+.idea/
+.vscode/
