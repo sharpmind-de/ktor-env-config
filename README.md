@@ -1,6 +1,7 @@
 # ktor-env-config
 
 ![GitHub](https://img.shields.io/github/license/sharpmind-de/ktor-env-config)
+![GitHub](https://img.shields.io/github/workflow/status/sharpmind-de/ktor-env-config/CI)
 
 A library for environment aware configuration in [KTOR](https://ktor.io/).
 
