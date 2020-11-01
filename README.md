@@ -105,11 +105,10 @@ The environment has to be set via environment variables. Depending on how you ru
 
 Here are some guidelines:
 
+
+TODO
+
 #### java -jar
-
-Run ktor as standalone app via java commandline:
-
-ENVIRONMENT
 
 #### docker run
 
