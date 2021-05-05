@@ -25,6 +25,20 @@ dependencies {
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
 }
 
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -34,11 +48,11 @@ publishing {
 
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/sharpmind-de/ktor-env-config"
+            name = "OSSRH"
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = System.getenv("OSSRH_USERNAME")
+                password = System.getenv("OSSRH_PASSWORD")
             }
         }
     }
