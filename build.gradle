@@ -2,6 +2,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.4.10'
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
     id 'net.researchgate.release' version '2.8.1'
 }
 
@@ -42,6 +43,32 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = 'Ktor Environment Config'
+                description = 'Environment aware configuration for Ktor'
+                url = 'https://github.com/sharpmind-de/ktor-env-config'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'stolzem'
+                        name = 'Marco Stolze'
+                        email = 'marco@sharpmind.de'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/sharpmind-de/ktor-env-config.git'
+                    developerConnection = 'scm:git:https://github.com/sharpmind-de/ktor-env-config.git'
+                    url = 'https://github.com/sharpmind-de/ktor-env-config'
+                }
+            }
         }
     }
 
@@ -50,9 +77,17 @@ publishing {
             name = "OSSRH"
             url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
             credentials {
-                username = System.getenv("OSSRH_USERNAME")
-                password = System.getenv("OSSRH_PASSWORD")
+                username = project.findProperty('OSSRH_USERNAME') ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty('OSSRH_PASSWORD') ?: System.getenv("OSSRH_PASSWORD")
             }
         }
+    }
+}
+
+signing {
+    if (project.hasProperty('signing.keyId') &&
+            project.hasProperty('signing.password') &&
+            project.hasProperty('signing.secretKeyRingFile')) {
+        sign publishing.publications.mavenJava
     }
 }
