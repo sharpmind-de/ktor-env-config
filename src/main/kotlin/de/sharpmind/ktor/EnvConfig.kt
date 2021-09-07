@@ -2,7 +2,6 @@ package de.sharpmind.ktor
 
 import io.ktor.config.ApplicationConfig
 import io.ktor.config.ApplicationConfigValue
-import io.ktor.util.KtorExperimentalAPI
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory
  *
  * todo description
  */
-@KtorExperimentalAPI
 object EnvConfig {
     private const val ROOT_NODE = "envConfig"
     private const val ENVIRONMENT_NODE = "env"

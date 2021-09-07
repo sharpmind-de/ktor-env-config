@@ -2,7 +2,6 @@ package de.sharpmind.ktor
 
 import com.typesafe.config.ConfigFactory
 import io.ktor.config.HoconApplicationConfig
-import io.ktor.util.KtorExperimentalAPI
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -14,7 +13,6 @@ import kotlin.test.*
  * These test methods have to run in a specific order.
  * Therefore NAME_ASCENDING is configured for method sorting.
  */
-@KtorExperimentalAPI
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class EnvConfigTest {
 
