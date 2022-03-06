@@ -1,7 +1,8 @@
 package de.sharpmind.ktor
 
-import io.ktor.config.ApplicationConfig
-import io.ktor.config.ApplicationConfigValue
+import de.sharpmind.ktor.exceptions.KeyNotFoundException
+import de.sharpmind.ktor.exceptions.NotInitializedException
+import io.ktor.config.*
 import org.slf4j.LoggerFactory
 
 /**
@@ -14,9 +15,6 @@ object EnvConfig {
     private const val ENVIRONMENT_NODE = "env"
     private const val DEFAULT_ENVIRONMENT = "default"
 
-    /* todo  in case of an override use ConfigFactory.load("conf/url_short").withFallback(ConfigFactory.defaultApplication()).resolve()
-    private val urlShortConfig: Config =
-        ConfigFactory.load("conf/url_short").withFallback(ConfigFactory.defaultApplication()).resolve()*/
     private lateinit var config: ApplicationConfig
     private val logger = LoggerFactory.getLogger(this::class.java)
     private var environment: String = DEFAULT_ENVIRONMENT
@@ -31,42 +29,74 @@ object EnvConfig {
         apply {
             this.config = config
 
-            // if the environment property is available, we set it, if not use default
-            this.environment = config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString() ?: DEFAULT_ENVIRONMENT
-            logger.info("use environment: $environment")
+            config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString()?.let { customEnv ->
+                environment = customEnv
+            }
         }
+
+    /**
+     * Gets boolean property from config with default fallback
+     *
+     * @return the default property for provided key or throws an exception if key does not exist
+     */
+    fun getBoolean(propertyKey: String): Boolean =
+        getBooleanInternal(environment, propertyKey)
+            ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+
+    /**
+     * Gets int property from config with default fallback
+     *
+     * @return the int property for provided key or throws an exception if key does not exist
+     */
+    fun getInt(propertyKey: String): Int =
+        getIntInternal(environment, propertyKey) ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+
+    /**
+     * Gets list property from config with default fallback
+     *
+     * @return the list property for provided key or throws an exception if key does not exist
+     */
+    fun getList(propertyKey: String): List<String> =
+        getListInternal(environment, propertyKey) ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+
+    /**
+     * Gets string property from config with default fallback
+     *
+     * @return the string property for provided key or throws an exception if key does not exist
+     */
+    fun getString(propertyKey: String): String =
+        getStringInternal(environment, propertyKey)
+            ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+
 
     /**
      * Gets boolean property from config with default fallback
      *
      * @return the default property for provided key or null if it doesn't exist
      */
-    fun getBoolean(propertyKey: String): Boolean? =
-        getBooleanInternal(environment, propertyKey) ?: getBooleanInternal(DEFAULT_ENVIRONMENT, propertyKey)
+    fun getBooleanOrNull(propertyKey: String): Boolean? = getBooleanInternal(environment, propertyKey)
 
     /**
      * Gets int property from config with default fallback
      *
      * @return the int property for provided key or null if it doesn't exist
      */
-    fun getInt(propertyKey: String): Int? =
-        getIntInternal(environment, propertyKey) ?: getIntInternal(DEFAULT_ENVIRONMENT, propertyKey)
+    fun getIntOrNull(propertyKey: String): Int? = getIntInternal(environment, propertyKey)
 
     /**
      * Gets list property from config with default fallback
      *
      * @return the list property for provided key or null if it doesn't exist
      */
-    fun getList(propertyKey: String): List<String>? =
-        getListInternal(environment, propertyKey) ?: getListInternal(DEFAULT_ENVIRONMENT, propertyKey)
+    fun getListOrNull(propertyKey: String): List<String>? = getListInternal(environment, propertyKey)
 
     /**
      * Gets string property from config with default fallback
      *
      * @return the string property for provided key or null if it doesn't exist
      */
-    fun getString(propertyKey: String): String? =
-        getStringInternal(environment, propertyKey) ?: getStringInternal(DEFAULT_ENVIRONMENT, propertyKey)
+    fun getStringOrNull(propertyKey: String): String? = getStringInternal(environment, propertyKey)
+
 
     /**
      * Gets boolean property from config with default fallback
@@ -74,7 +104,8 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the default property for provided key or defaultVal if it doesn't exist
      */
-    fun getBoolean(propertyKey: String, defaultVal: Boolean): Boolean = getBoolean(propertyKey) ?: defaultVal
+    fun getBooleanOrDefault(propertyKey: String, defaultVal: Boolean): Boolean =
+        getBooleanOrNull(propertyKey) ?: defaultVal
 
     /**
      * Gets int property from config with default fallback
@@ -82,7 +113,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the int property for provided key or defaultVal if it doesn't exist
      */
-    fun getInt(propertyKey: String, defaultVal: Int): Int = getInt(propertyKey) ?: defaultVal
+    fun getIntOrDefault(propertyKey: String, defaultVal: Int): Int = getIntOrNull(propertyKey) ?: defaultVal
 
     /**
      * Gets list property from config with default fallback
@@ -90,7 +121,8 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the list property for provided key or defaultVal if it doesn't exist
      */
-    fun getList(propertyKey: String, defaultVal: List<String>): List<String> = getList(propertyKey) ?: defaultVal
+    fun getListOrDefault(propertyKey: String, defaultVal: List<String>): List<String> =
+        getListOrNull(propertyKey) ?: defaultVal
 
     /**
      * Gets string property from config with default fallback
@@ -98,7 +130,7 @@ object EnvConfig {
      * @param defaultVal the returned value, in case of null
      * @return the string property for provided key or defaultVal if it doesn't exist
      */
-    fun getString(propertyKey: String, defaultVal : String): String = getString(propertyKey) ?: defaultVal
+    fun getStringOrDefault(propertyKey: String, defaultVal: String): String = getStringOrNull(propertyKey) ?: defaultVal
 
     private fun getBooleanInternal(environment: String, propertyKey: String): Boolean? =
         getStringInternal(environment, propertyKey)?.toBoolean()
@@ -113,19 +145,22 @@ object EnvConfig {
         getPropertyInternal(environment, propertyKey)?.getString()
 
     /**
-     * Get property from config for specified environment
+     * Get property from config for specified environment, with fallback to default environment
      *
-     * @return the application config value for the provided environment and key - or null if key is not found
+     * @return the application config value for the provided environment and key -
+     * or from default environment or null if key is not found
      * @throws Exception if EnvConfig is not initialized yet
      */
     private fun getPropertyInternal(environment: String, propertyKey: String): ApplicationConfigValue? {
         // do we have a config?
         if (!::config.isInitialized) {
             logger.warn("EnvConfig not initialized yet")
-            throw Exception("Not initialized yet")
+            throw NotInitializedException("Not initialized yet")
         }
 
         val path = "${ROOT_NODE}.${environment}.$propertyKey"
-        return config.propertyOrNull(path)
+        val pathDefault = "${ROOT_NODE}.${DEFAULT_ENVIRONMENT}.$propertyKey"
+
+        return config.propertyOrNull(path) ?: config.propertyOrNull(pathDefault)
     }
 }

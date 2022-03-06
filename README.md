@@ -26,7 +26,6 @@ The following example service has to configure different firebase URLs for the e
 
 ### sample application.conf
 
-
 ```
 ktor {
     deployment {
@@ -63,7 +62,7 @@ envConfig{
 
 In this example the variable that sets the environment is called "ENVIRONMENT". If you want to use a different variable you have to change the ```env = ${?ENVIRONMENT}``` line accordingly.
 
-All you default configuration for the service go to the envConfig.default block.
+The default configuration for the service goes to the envConfig.default block.
 Any overrides for other environments go to blocks with the same name as the environment.
 
 Properties that are not specified in specific environments are using the default values. You just overwrite properties in specific environments if they differ from default.
@@ -88,31 +87,58 @@ From anywhere in the code configuration properties can be accessed through the E
 
 The following methods are available:
 
+#### Return value is not null, throws exception if key does not exist.
 ```
-EnvConfig.getString(key: String):String?
-EnvConfig.getInt(key: String):Int?
-EnvConfig.getList(key: String):List<String>?
+EnvConfig.getBoolean(key: String): Boolean
+EnvConfig.getInt(key: String): Int
+EnvConfig.getList(key: String): List<String>
+EnvConfig.getString(key: String): String
+```
+#### Return value is nullable, returns null if key does not exist.
+```
+EnvConfig.getBooleanOrNull(key: String): Boolean?
+EnvConfig.getIntOrNull(key: String): Int?
+EnvConfig.getListOrNull(key: String): List<String>?
+EnvConfig.getStringOrNull(key: String): String?
+```
+#### Return value is not null, returns default value if key does not exist
+```
+EnvConfig.getBooleanOrDefault(key: String, default: Boolean): Boolean
+EnvConfig.getIntOrDefault(key: String, default: Int): Int
+EnvConfig.getListOrDefault(key: String, default: List<String>): List<String>
+EnvConfig.getStringOrDefault(key: String, default: String): String
+```
 
-EnvConfig.getString(key: String, default:String):String
-EnvConfig.getInt(key: String, default: Int):Int
-EnvConfig.getList(key: String, default: List<String>):List<String>
+### type evaluation
+
+#### boolean
+if getBoolean*() methods are used the configured property value is evaluated according to the Boolean.parseBoolean(String s) method logic
+
 ```
-Please note that the methods with default return not nullable types.
+public static boolean parseBoolean(String s) {
+    return ((s != null) && s.equalsIgnoreCase("true"));
+}
+```
+
+So everything is considered to be false, except for the string "true", evaluated case insensitive.
 
 ### set environment
 
 The environment has to be set via environment variables. Depending on how you run your service you have to set it in a different way.
 
-Here are some guidelines:
-
-
-TODO
+Here are some guidelines and pointers:
 
 #### java -jar
 
+java -DENVIRONMENT=staging -jar yourapp.jar
+
 #### docker run
 
+see also https://docs.docker.com/engine/reference/commandline/run/
+
 #### docker-compose
+
+see also https://docs.docker.com/compose/environment-variables/
 
 ## License
 
