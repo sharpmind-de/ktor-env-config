@@ -16,6 +16,14 @@ The same application has to use different properties in different environments. 
 ktor-env-config solves the issue of different configuration properties per environment. You can specify the default configuration parameters and possible overwrites in env specific blocks.
 From outside you just need to set the current environment as a environment variable and you are all set.
 
+## Installation
+
+In your `build.gradle.kts`, add:
+
+    // https://github.com/sharpmind-de/ktor-env-config
+    implementation("de.sharpmind.ktor:ktor-env-config:<version>")
+
+Replace `<version>` by one [release version](https://github.com/sharpmind-de/ktor-env-config/releases) of the project.
 
 ## Usage
 
