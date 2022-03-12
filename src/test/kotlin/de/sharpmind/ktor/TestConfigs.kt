@@ -1,7 +1,7 @@
 package de.sharpmind.ktor
 
 import com.typesafe.config.ConfigFactory
-import io.ktor.config.*
+import io.ktor.server.config.*
 
 // TEST CONFIG A
 val testConfigA = HoconApplicationConfig(

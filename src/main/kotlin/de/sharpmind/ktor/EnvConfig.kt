@@ -2,7 +2,7 @@ package de.sharpmind.ktor
 
 import de.sharpmind.ktor.exceptions.KeyNotFoundException
 import de.sharpmind.ktor.exceptions.NotInitializedException
-import io.ktor.config.*
+import io.ktor.server.config.*
 import org.slf4j.LoggerFactory
 
 /**
