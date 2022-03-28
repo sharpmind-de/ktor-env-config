@@ -1,9 +1,12 @@
 package de.sharpmind.ktor
 
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 import de.sharpmind.ktor.exceptions.KeyNotFoundException
 import de.sharpmind.ktor.exceptions.NotInitializedException
 import io.ktor.config.*
 import org.slf4j.LoggerFactory
+import java.io.File
 
 /**
  * Environment config main class
@@ -14,8 +17,10 @@ object EnvConfig {
     private const val ROOT_NODE = "envConfig"
     private const val ENVIRONMENT_NODE = "env"
     private const val DEFAULT_ENVIRONMENT = "default"
+    private const val EXTERNAL_FILE_CONFIG_FILE_NODE = "configFile"
 
     private lateinit var config: ApplicationConfig
+    private var externalConfig: ApplicationConfig? = null
     private val logger = LoggerFactory.getLogger(this::class.java)
     private var environment: String = DEFAULT_ENVIRONMENT
 
@@ -32,7 +37,35 @@ object EnvConfig {
             config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString()?.let { customEnv ->
                 environment = customEnv
             }
+
+            // add the additional config, in case we have one
+            handleExternalConfig()
         }
+
+    /**
+     * we handle the external config file
+     * HOCON type config file, if available
+     */
+    private fun handleExternalConfig() {
+        try {
+            val externalFile: String? =
+                getString(EXTERNAL_FILE_CONFIG_FILE_NODE)
+
+            externalFile?.let {
+                val extConfigFile = File(it)
+
+                if (extConfigFile?.exists() && extConfigFile.canRead()) {
+                    logger.debug("setting external config to file :$it")
+
+                    val conf: Config = ConfigFactory.parseFile(extConfigFile)
+
+                    externalConfig = HoconApplicationConfig(conf)
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("exception while handling external config file", e)
+        }
+    }
 
     /**
      * Gets boolean property from config with default fallback
@@ -145,10 +178,29 @@ object EnvConfig {
         getPropertyInternal(environment, propertyKey)?.getString()
 
     /**
-     * Get property from config for specified environment, with fallback to default environment
+     * Get property from config for specified key
      *
-     * @return the application config value for the provided environment and key -
-     * or from default environment or null if key is not found
+     * @return the external config value for the provided key, if available
+     */
+    private fun getExternalProperty(propertyKey: String): ApplicationConfigValue? =
+        externalConfig?.propertyOrNull(propertyKey)
+
+    /**
+     * Get the current environment in use
+     *
+     * @return value of the DEFAULT_ENVIRONMENT or the value,
+     *         of ENVIRONMENT_NODE, if set in the config file
+     */
+    fun getEnvironment(): String = environment
+
+    /**
+     * Get property from external config, if available,
+     * or from application.conf, for specified environment with fallback to default environment
+     *
+     * @return the application config value for the provided key from an external file,
+     *         or environment.key,
+     *         or default environment.key,
+     *         or null if key is not found in any of the upper cases
      * @throws Exception if EnvConfig is not initialized yet
      */
     private fun getPropertyInternal(environment: String, propertyKey: String): ApplicationConfigValue? {
@@ -158,9 +210,18 @@ object EnvConfig {
             throw NotInitializedException("Not initialized yet")
         }
 
-        val path = "${ROOT_NODE}.${environment}.$propertyKey"
-        val pathDefault = "${ROOT_NODE}.${DEFAULT_ENVIRONMENT}.$propertyKey"
+        // for the external config, we use the key without extra params
+        val externalValue = getExternalProperty(propertyKey)
 
-        return config.propertyOrNull(path) ?: config.propertyOrNull(pathDefault)
+        return when {
+            externalValue != null -> externalValue
+            else -> {
+                val path = "${ROOT_NODE}.${environment}.$propertyKey"
+                val pathDefault = "${ROOT_NODE}.${DEFAULT_ENVIRONMENT}.$propertyKey"
+
+                return config.propertyOrNull(path) ?: config.propertyOrNull(pathDefault)
+
+            }
+        }
     }
 }

@@ -178,5 +178,10 @@ class TestEnvConfig {
         assertNull(EnvConfig.initConfig(testConfigC).getStringOrNull("a"))
     }
 
-
+    @Test
+    fun testConfigC_getD() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        assertEquals(EnvConfig.initConfig(testConfigD).getEnvironment(), "testEnv")
+        assertEquals(EnvConfig.initConfig(testConfigD).getString("configFile"), "path_to_the_external_file.conf")
+    }
 }
