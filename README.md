@@ -52,6 +52,7 @@ envConfig{
     default {                                               
         db_url = "https://com.company.superapp.test-123456.firebaseio.com"
         enableTestAccounts = false
+        configFile = "path_to_the_external_file.conf"
     }
 
     dev {
@@ -75,6 +76,7 @@ Any overrides for other environments go to blocks with the same name as the envi
 
 Properties that are not specified in specific environments are using the default values. You just overwrite properties in specific environments if they differ from default.
 
+
 ### initialize EnvConfig
 
 The EnvConfig object has to be initialized with the ktor configuration. A good place is the ```Application.module()``` extension function.
@@ -88,6 +90,12 @@ fun Application.module(testing: Boolean = false) {
     ...
 }
 ```
+
+### set external configuration file
+
+An external HOCON type file can be specified via the " configFile" property.
+In case the value is set, the content of the file will be parsed and upon success, it will result in a separate external Config.
+In this case, the search for a property will first be resolved based on the external Config, and if the property is not found, it will be resolved based on the standard Config, following the described steps.    
 
 ### get configuration properties
 
