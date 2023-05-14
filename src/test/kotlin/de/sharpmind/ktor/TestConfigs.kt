@@ -47,3 +47,25 @@ val testConfigB = HoconApplicationConfig(
 
 // TEST CONFIG C
 val testConfigC = HoconApplicationConfig(ConfigFactory.parseString(""))
+
+// TEST CONFIG D
+val testConfigD = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+            externalConfigFile = "src/test/resources/test.conf"
+    
+            default {
+                a = 1
+                b = false
+            }
+    
+            testEnv {
+                a = 2
+                b = false
+            }
+        }
+        """.trimIndent()
+    )
+)

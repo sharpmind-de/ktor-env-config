@@ -162,7 +162,7 @@ class TestEnvConfig {
     fun testConfigB_getBOrNull() {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
-        assertTrue(EnvConfig.initConfig(testConfigB).getBooleanOrNull("b")!!)
+        assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
         assertFails { EnvConfig.initConfig(testConfigB).getIntOrNull("b") }
         assertFails { EnvConfig.initConfig(testConfigB).getListOrNull("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getStringOrNull("b"))
@@ -178,5 +178,11 @@ class TestEnvConfig {
         assertNull(EnvConfig.initConfig(testConfigC).getStringOrNull("a"))
     }
 
+    @Test
+    fun testConfigD_externalConfigFile() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
+        assertEquals(3, EnvConfig.initConfig(testConfigD).getInt("a"))
+        assertTrue(EnvConfig.initConfig(testConfigD).getBoolean("b"))
+    }
 }
