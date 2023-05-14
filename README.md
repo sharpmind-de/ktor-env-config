@@ -1,11 +1,10 @@
 # ktor-env-config
 
 ![GitHub](https://img.shields.io/github/license/sharpmind-de/ktor-env-config)
-![GitHub](https://img.shields.io/github/workflow/status/sharpmind-de/ktor-env-config/CI)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sharpmind-de/ktor-env-config)
+![GitHub top language](https://img.shields.io/github/languages/top/sharpmind-de/ktor-env-config)
 
-A library for environment aware configuration in [KTOR](https://ktor.io/).
-
-ktor-env-config allows access to configuration properties from everywhere in the code.
+The ktor-env-config library is designed to provide environment-aware configuration capabilities for [KTOR](https://ktor.io/) projects. With this library, you can easily access configuration properties from anywhere in your code.
 
 ## Branches
 
@@ -20,13 +19,9 @@ ktor-env-config allows access to configuration properties from everywhere in the
 
 ## Description
 
-Usually a KTOR project runs in different environments during it's development and deployment workflow. Test, Staging and Production environments are often used.
+In a typical KTOR project, different environments such as Test, Staging, and Production are used during development and deployment workflows. These environments require different configuration properties, such as database connections and external services.
 
-The same application has to use different properties in different environments. Database connections and similar external services are examples. 
-
-ktor-env-config solves the issue of different configuration properties per environment. You can specify the default configuration parameters and possible overwrites in env specific blocks.
-From outside you just need to set the current environment as a environment variable and you are all set.
-
+To manage these configuration properties, you can use the ktor-env-config library. This library allows you to specify default configuration parameters and possible overrides in environment-specific blocks. To use this library, simply set the current environment as an environment variable, and you're all set.
 ## Installation
 
 In your `build.gradle.kts`, add:
@@ -65,7 +60,7 @@ envConfig{
         enableTestAccounts = false
     }
 
-    dev {
+    test {
         enableTestAccounts = true
     }
 
@@ -73,19 +68,19 @@ envConfig{
         db_url = "https://com.company.superapp.staging-123456.firebaseio.com"
     }
 
-    prod {
+    production {
         db_url = "https://com.company.superapp.prod-123456.firebaseio.com"
     }
 }
 ```
 
-In this example the variable that sets the environment is called "ENVIRONMENT". If you want to use a different variable you have to change the ```env = ${?ENVIRONMENT}``` line accordingly.
+To set the environment for ktor-env-config, use the environment variable `ENVIRONMENT` in this example. ENVIRONMENT is the default variable name for ktor-env-config.
 
-The default configuration for the service goes to the envConfig.default block.
-Any overrides for other environments go to blocks with the same name as the environment.
+To use a different variable, modify the line `env = ${?ENVIRONMENT}` with your preferred variable name.
 
-Properties that are not specified in specific environments are using the default values. You just overwrite properties in specific environments if they differ from default.
+The default configuration for the service can be found in the `envConfig.default` block. For other environments, override the default configuration by using a block with the same name as the environment.
 
+If a property is not specified in a specific environment, it will use the default value. Only overwrite properties in specific environments if they differ from the default value.
 ### initialize EnvConfig
 
 The EnvConfig object has to be initialized with the ktor configuration. A good place is the ```Application.module()``` extension function.
@@ -102,25 +97,26 @@ fun Application.module(testing: Boolean = false) {
 
 ### manual initialization of EnvConfig
 
-In certain situations it might be necessary to initialize the EnvConfig object manually.
-Unit tests are a good example.
+In certain situations, such as during unit tests, it may be necessary to manually initialize the EnvConfig object.
+To do this, call `EnvConfig.initConfig()` with a configuration object that implements `ApplicationConfig`.
+You can conveniently use `MapApplicationConfig` to create a map of configuration properties.
 
-```EnvConfig.initConfig()``` has to be called with a config object that implements ```ApplicationConfig```.
-```MapApplicationConfig``` can be used conveniently to create a map of configuration properties.
+To specify the environment to be used, the config key paths should start with `envConfig.<environment>`. The environment name can be set using the ENVIRONMENT environment variable.
 
-The config key paths have to start with ```envConfig.<environment>```. The environment is the name of the environment that should be used. It can be specified via the ```ENVIRONMENT``` environment variable. 
-
-Sample code to manually initialize EnvConfig:
+Here's an example code snippet to manually initialize EnvConfig:
 
 ```
-        // prepare test config
-        val appConfig = MapApplicationConfig()
-        appConfig.put("envConfig.default.db.host", "dev-db-14")
-        appConfig.put("envConfig.default.db.dbname", "appdb")
-        appConfig.put("envConfig.default.db.user", "myDBUser")
-        appConfig.put("envConfig.default.db.password", "89qh8hh78dasf")
-        appConfig.put("envConfig.default.feature1.enabled", "false")
-        EnvConfig.initConfig(appConfig)
+// Prepare test config
+val appConfig = MapApplicationConfig()
+appConfig.put("envConfig.default.db.host", "dev-db-14")
+appConfig.put("envConfig.default.db.dbname", "appdb")
+appConfig.put("envConfig.default.db.user", "myDBUser")
+appConfig.put("envConfig.default.db.password", "89qh8hh78dasf")
+appConfig.put("envConfig.default.feature1.enabled", "false")
+
+// Initialize EnvConfig
+EnvConfig.initConfig(appConfig)
+
 ```
 
 Afterward the configuration properties can be accessed via the EnvConfig object.
@@ -131,32 +127,39 @@ From anywhere in the code configuration properties can be accessed through the E
 
 The following methods are available:
 
-#### Return value is not null, throws exception if key does not exist.
+#### Return value is not null, throws exception if key does not exist or if requested type can't be instantiated from specified config value.
 ```
 EnvConfig.getBoolean(key: String): Boolean
 EnvConfig.getInt(key: String): Int
 EnvConfig.getList(key: String): List<String>
 EnvConfig.getString(key: String): String
+EnvConfig.getFile(key: String): File
+EnvConfig.getUrl(key: String): URL
 ```
-#### Return value is nullable, returns null if key does not exist.
+#### Return value is nullable, returns null if key does not exist or if requested type can't be instantiated from specified config value..
 ```
 EnvConfig.getBooleanOrNull(key: String): Boolean?
 EnvConfig.getIntOrNull(key: String): Int?
 EnvConfig.getListOrNull(key: String): List<String>?
 EnvConfig.getStringOrNull(key: String): String?
+EnvConfig.getFileOrNull(key: String): File?
+EnvConfig.getUrlOrNull(key: String): URL?
 ```
-#### Return value is not null, returns default value if key does not exist
+#### Return value is not null, returns default value if key does not exist or if requested type can't be instantiated from specified config value.
 ```
 EnvConfig.getBooleanOrDefault(key: String, default: Boolean): Boolean
 EnvConfig.getIntOrDefault(key: String, default: Int): Int
 EnvConfig.getListOrDefault(key: String, default: List<String>): List<String>
 EnvConfig.getStringOrDefault(key: String, default: String): String
+EnvConfig.getFileOrDefault(key: String, default: String): File
+EnvConfig.getUrlOrDefault(key: String, default: String): URL
 ```
 
 ### type evaluation
 
 #### boolean
-if getBoolean*() methods are used the configured property value is evaluated according to the Boolean.parseBoolean(String s) method logic
+
+If `getBoolean*()` methods are used, the configured property value is evaluated according to the `Boolean.parseBoolean(String s)` method logic.
 
 ```
 public static boolean parseBoolean(String s) {
@@ -164,25 +167,89 @@ public static boolean parseBoolean(String s) {
 }
 ```
 
-So everything is considered to be false, except for the string "true", evaluated case insensitive.
+So everything is considered to be false, except for the string `"true"`, evaluated case-insensitive.
 
-### set environment
+### internal information ###
 
-The environment has to be set via environment variables. Depending on how you run your service you have to set it in a different way.
+EnvConfig offers methods to get it's internal state. This is useful for debugging purposes.
 
-Here are some guidelines and pointers:
+```
+# return the configured environment string
+# do not base configuration decisions on this value, use the individual configuration properties and environment blocks instead
+EnvConfig.getEnvironment(): String
+
+# returns a configured external config file, or null if none is configured
+EnvConfig.getExternalConfigFile(): String?
+```
+
+### set ENVIRONMENT environment variable
+
+To set the environment for your KTOR service using the ktor-env-config library, you need to set an environment variable. The way you set this variable may vary depending on how you run your service.
+
+The default name that ktor-env-config is looking for is `ENVIRONMENT`. You can change this by modifying the line `env = ${?ENVIRONMENT}` in the configuration file.
+
+Here are some guidelines and pointers to help you set the environment variable correctly:
+
+
+#### Command line
+
+If you're running your service from the command line, you can set the environment variable using the export command in Unix-based systems or the set command in Windows systems. For example:
+
+```
+export ENVIRONMENT=prod
+```
+
+or
+
+```
+set ENVIRONMENT=prod
+```
 
 #### java -jar
 
+If you're running your service as a standalone JAR file using the java -jar command, you can set the environment variable using the -D flag. For example:
+
+```
 java -DENVIRONMENT=staging -jar yourapp.jar
+```
 
 #### docker run
 
-see also https://docs.docker.com/engine/reference/commandline/run/
+If you're running your service in a Docker container, you can set the environment variable using the -e flag when running the docker run command. For example:
+
+```
+docker run -e ENVIRONMENT=staging yourimage
+```
+
+For more information on the docker run command, see the official Docker documentation: [docker run](https://docs.docker.com/engine/reference/commandline/run/)  
 
 #### docker-compose
 
-see also https://docs.docker.com/compose/environment-variables/
+If you're using Docker Compose to manage your Docker containers, you can set the environment variable in your docker-compose.yml file. For example:
+
+```
+...
+environment:
+  - ENVIRONMENT=staging
+...
+```
+
+see also: [Docker Compose Environment Variables](https://docs.docker.com/compose/environment-variables/)
+
+#### Kubernetes
+
+To set the ENVIRONMENT variable in a Kubernetes environment, you can use Kubernetes ConfigMaps. ConfigMaps allow you to manage configuration data as key-value pairs and separate them from the container image.
+Here's an example of how to create a ConfigMap with the ENVIRONMENT variable set to production:
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  ENVIRONMENT: production
+```
+
 
 ## License
 
