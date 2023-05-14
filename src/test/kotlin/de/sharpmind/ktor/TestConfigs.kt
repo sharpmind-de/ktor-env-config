@@ -69,3 +69,26 @@ val testConfigD = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG E
+val testConfigE = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+    
+            default {
+                a = 1
+                b = false
+            }
+    
+            testEnv {
+                url1 = "http://localhost:8080"
+                url2 = "https://www.google.com/foobar?foo=bar&baz=qux"
+                file1 = "c:/foo/bar/baz.txt"
+                file2 = "/root/bin/test.sh"
+            }
+        }
+        """.trimIndent()
+    )
+)

@@ -3,6 +3,8 @@ package de.sharpmind.ktor
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.net.URL
 import kotlin.test.*
 
 /**
@@ -184,5 +186,26 @@ class TestEnvConfig {
 
         assertEquals(3, EnvConfig.initConfig(testConfigD).getInt("a"))
         assertTrue(EnvConfig.initConfig(testConfigD).getBoolean("b"))
+    }
+
+    @Test
+    fun testConfigE_files() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        assertIs<File>(EnvConfig.initConfig(testConfigE).getFile("file1"))
+        assertEquals("baz.txt", EnvConfig.initConfig(testConfigE).getFile("file1").name)
+        assertIs<File>(EnvConfig.initConfig(testConfigE).getFile("file2"))
+        assertEquals("test.sh", EnvConfig.initConfig(testConfigE).getFile("file2").name)
+    }
+
+    @Test
+    fun testConfigE_urls() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        assertIs<URL>(EnvConfig.initConfig(testConfigE).getUrl("url1"))
+        assertEquals("localhost", EnvConfig.initConfig(testConfigE).getUrl("url1").host)
+        assertIs<URL>(EnvConfig.initConfig(testConfigE).getUrl("url2"))
+        assertEquals("www.google.com", EnvConfig.initConfig(testConfigE).getUrl("url2").host)
+        assertEquals("https", EnvConfig.initConfig(testConfigE).getUrl("url2").protocol)
     }
 }

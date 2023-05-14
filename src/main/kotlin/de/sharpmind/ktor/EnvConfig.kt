@@ -4,6 +4,9 @@ import de.sharpmind.ktor.exceptions.KeyNotFoundException
 import de.sharpmind.ktor.exceptions.NotInitializedException
 import io.ktor.server.config.*
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.net.MalformedURLException
+import java.net.URL
 
 /**
  * Environment config main class
@@ -31,16 +34,24 @@ object EnvConfig {
         apply {
             this.config = config
 
+            // set environment if configured
+            this.environment = DEFAULT_ENVIRONMENT
             config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString()?.let { customEnv ->
                 environment = customEnv
             }
 
+            // set external config file if configured and existent
+            this.extConfig = null
             config.propertyOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")?.getString()?.let { externalFilePath ->
                 HoconConfigLoader().load(externalFilePath).let { externalConfig ->
                     extConfig = externalConfig
                 }
             }
         }
+
+    fun getEnvironment(): String = environment
+    fun getExternalConfigFile() = getStringOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")
+
 
     /**
      * Gets boolean property from config with default fallback
@@ -76,6 +87,33 @@ object EnvConfig {
         getStringInternal(environment, propertyKey)
             ?: throw KeyNotFoundException("Property $propertyKey does not exist")
 
+    /**
+     * Gets file property from config with default fallback
+     *
+     * @return the file property for provided key or throws an exception if key does not exist
+     */
+    fun getFile(propertyKey: String): File =
+        File(
+            getStringInternal(environment, propertyKey)
+                ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+        )
+
+    /**
+     * Gets url property from config with default fallback
+     *
+     * @return the url property for provided key or throws an exception if key does not exist
+     */
+    fun getUrl(propertyKey: String): URL {
+        val url = getStringInternal(environment, propertyKey)
+            ?: throw KeyNotFoundException("Property $propertyKey does not exist")
+
+        return try {
+            URL(url)
+        } catch (e: MalformedURLException) {
+            logger.error("Malformed URL: $url")
+            throw e
+        }
+    }
 
     /**
      * Gets boolean property from config with default fallback
@@ -105,6 +143,23 @@ object EnvConfig {
      */
     fun getStringOrNull(propertyKey: String): String? = getStringInternal(environment, propertyKey)
 
+    /**
+     * Gets file property from config with default fallback
+     *
+     * @return the file property for provided key or null if it doesn't exist
+     */
+    fun getFileOrNull(propertyKey: String): File? = getStringInternal(environment, propertyKey)?.let { File(it) }
+
+    /**
+     * Gets url property from config with default fallback
+     *
+     * @return the url property for provided key or null if it doesn't exist
+     */
+    fun getUrlOrNull(propertyKey: String): URL? = try {
+        getUrl(propertyKey)
+    } catch (e: Throwable) {
+        null
+    }
 
     /**
      * Gets boolean property from config with default fallback
@@ -139,6 +194,22 @@ object EnvConfig {
      * @return the string property for provided key or defaultVal if it doesn't exist
      */
     fun getStringOrDefault(propertyKey: String, defaultVal: String): String = getStringOrNull(propertyKey) ?: defaultVal
+
+    /**
+     * Gets file property from config with default fallback
+     *
+     * @param defaultVal the returned value, in case of null
+     * @return the file property for provided key or defaultVal if it doesn't exist
+     */
+    fun getFileOrDefault(propertyKey: String, defaultVal: File): File = getFileOrNull(propertyKey) ?: defaultVal
+
+    /**
+     * Gets URL property from config with default fallback
+     *
+     * @param defaultVal the returned value, in case of null
+     * @return the URL property for provided key or defaultVal if it doesn't exist
+     */
+    fun getUrlOrDefault(propertyKey: String, defaultVal: URL): URL = getUrlOrNull(propertyKey) ?: defaultVal
 
     private fun getBooleanInternal(environment: String, propertyKey: String): Boolean? =
         getStringInternal(environment, propertyKey)?.toBoolean()
