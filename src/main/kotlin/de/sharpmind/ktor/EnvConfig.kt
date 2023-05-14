@@ -8,14 +8,16 @@ import org.slf4j.LoggerFactory
 /**
  * Environment config main class
  *
- * todo description
+ * offers access to config values from application.conf and external config file with fallbacks
  */
 object EnvConfig {
     private const val ROOT_NODE = "envConfig"
     private const val ENVIRONMENT_NODE = "env"
+    private const val EXT_CONFIG_NODE = "externalConfigFile"
     private const val DEFAULT_ENVIRONMENT = "default"
 
     private lateinit var config: ApplicationConfig
+    private var extConfig: ApplicationConfig? = null
     private val logger = LoggerFactory.getLogger(this::class.java)
     private var environment: String = DEFAULT_ENVIRONMENT
 
@@ -31,6 +33,12 @@ object EnvConfig {
 
             config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString()?.let { customEnv ->
                 environment = customEnv
+            }
+
+            config.propertyOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")?.getString()?.let { externalFilePath ->
+                HoconConfigLoader().load(externalFilePath).let { externalConfig ->
+                    extConfig = externalConfig
+                }
             }
         }
 
@@ -158,9 +166,13 @@ object EnvConfig {
             throw NotInitializedException("Not initialized yet")
         }
 
-        val path = "${ROOT_NODE}.${environment}.$propertyKey"
+        val pathExternal = propertyKey
+        val pathEnvironment = "${ROOT_NODE}.${environment}.$propertyKey"
         val pathDefault = "${ROOT_NODE}.${DEFAULT_ENVIRONMENT}.$propertyKey"
 
-        return config.propertyOrNull(path) ?: config.propertyOrNull(pathDefault)
+        // try external config file first, then environment block, then default
+        return extConfig?.propertyOrNull(pathExternal)
+            ?: config.propertyOrNull(pathEnvironment)
+            ?: config.propertyOrNull(pathDefault)
     }
 }
