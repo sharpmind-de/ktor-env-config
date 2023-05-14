@@ -9,9 +9,14 @@ ktor-env-config allows access to configuration properties from everywhere in the
 
 ## Branches
 
-* main branch - ktor-env-config for KTOR-2.x (Versions 2.x)
-* ktor-1.x branch - ktor-env-config for KTOR-1.x (Versions 1.x)
-   * this branch is not maintained anymore
+* main
+  * Current active branch
+  * built for KTOR-2.x
+  * jar file versions 2.x
+* ktor-1.x
+  * ktor-env-config for KTOR-1.x
+  * this branch is not maintained anymore
+  * jar file versions 1.x
 
 ## Description
 
@@ -94,6 +99,31 @@ fun Application.module(testing: Boolean = false) {
     ...
 }
 ```
+
+### manual initialization of EnvConfig
+
+In certain situations it might be necessary to initialize the EnvConfig object manually.
+Unit tests are a good example.
+
+```EnvConfig.initConfig()``` has to be called with a config object that implements ```ApplicationConfig```.
+```MapApplicationConfig``` can be used conveniently to create a map of configuration properties.
+
+The config key paths have to start with ```envConfig.<environment>```. The environment is the name of the environment that should be used. It can be specified via the ```ENVIRONMENT``` environment variable. 
+
+Sample code to manually initialize EnvConfig:
+
+```
+        // prepare test config
+        val appConfig = MapApplicationConfig()
+        appConfig.put("envConfig.default.db.host", "dev-db-14")
+        appConfig.put("envConfig.default.db.dbname", "appdb")
+        appConfig.put("envConfig.default.db.user", "myDBUser")
+        appConfig.put("envConfig.default.db.password", "89qh8hh78dasf")
+        appConfig.put("envConfig.default.feature1.enabled", "false")
+        EnvConfig.initConfig(appConfig)
+```
+
+Afterward the configuration properties can be accessed via the EnvConfig object.
 
 ### get configuration properties
 
