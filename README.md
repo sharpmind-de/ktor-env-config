@@ -7,6 +7,17 @@ A library for environment aware configuration in [KTOR](https://ktor.io/).
 
 ktor-env-config allows access to configuration properties from everywhere in the code.
 
+## Branches
+
+* main
+    * Current active branch
+    * built for KTOR-2.x
+    * jar file versions 2.x
+* ktor-1.x
+    * ktor-env-config for KTOR-1.x
+    * this branch is not maintained anymore
+    * jar file versions 1.x
+
 ## Description
 
 Usually a KTOR project runs in different environments during it's development and deployment workflow. Test, Staging and Production environments are often used.
