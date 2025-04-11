@@ -3,8 +3,6 @@ package de.sharpmind.ktor
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import java.io.File
-import java.net.URL
 import kotlin.test.*
 
 /**

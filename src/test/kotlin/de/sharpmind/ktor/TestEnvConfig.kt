@@ -1,5 +1,6 @@
 package de.sharpmind.ktor
 
+import EnvConfig
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
