@@ -24,6 +24,22 @@ repositories {
     mavenCentral()
 }
 
+// Set JVM toolchain - this is the recommended approach
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
+// For compatibility, also set Java toolchain
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
 tasks.compileJava {
     options.encoding = "UTF-8"
 }
@@ -46,6 +62,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
     implementation("io.ktor:ktor-server-core:$ktor2_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+    testImplementation("org.slf4j:slf4j-simple:2.0.13")
 }
 
 publishing {

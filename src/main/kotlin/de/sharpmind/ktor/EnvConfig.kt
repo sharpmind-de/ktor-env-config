@@ -27,10 +27,10 @@ object EnvConfig {
     /**
      * Initialized env config with the ktor config object
      *
-     * @param config the application config (hacoon format)
+     * @param config the application config (hacoon or yaml format)
      * @return EnvConfig object itself for call chaining
      */
-    fun initConfig(config: ApplicationConfig): EnvConfig =
+    fun initConfig(config: ApplicationConfig, verbose: Boolean = false): EnvConfig =
         apply {
             this.config = config
 
@@ -43,15 +43,50 @@ object EnvConfig {
             // set external config file if configured and existent
             this.extConfig = null
             config.propertyOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")?.getString()?.let { externalFilePath ->
-                HoconConfigLoader().load(externalFilePath).let { externalConfig ->
+                HoconConfigLoader().load(externalFilePath)?.let { externalConfig ->
                     extConfig = externalConfig
+                } ?: {
+                    logger.warn("External config file $externalFilePath not found or not supported")
+                    throw NotInitializedException("External config file $externalFilePath not found or not supported")
                 }
             }
+
+            if (verbose) dumpConfig()
         }
 
     fun getEnvironment(): String = environment
     fun getExternalConfigFile() = getStringOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")
 
+
+    fun dumpConfig() {
+        if (!::config.isInitialized) {
+            logger.warn("EnvConfig not initialized yet")
+            throw NotInitializedException("Not initialized yet")
+        }
+
+        logger.info("--- Dumping configuration for environment: $environment ---")
+
+        val mergedConfig = mutableMapOf<String, String>()
+
+        config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap().forEach { (k, v) ->
+            mergedConfig[k] = v.toString()
+        }
+
+        if (config.config(ROOT_NODE).config(environment) != null) {
+            config.config(ROOT_NODE).config(environment).toMap().forEach { (k, v) ->
+                mergedConfig[k] = v.toString()
+            }
+        }
+
+        logger.info("Environment: $environment")
+        logger.info("External config file: ${getExternalConfigFile() ?: "none"}")
+        logger.info("Number of config entries: ${mergedConfig.size}")
+
+        mergedConfig.forEach { (key, value) ->
+            logger.info("$key = $value")
+        }
+        logger.info("--- End of config dump ---")
+    }
 
     /**
      * Gets boolean property from config with default fallback

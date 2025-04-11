@@ -1,0 +1,23 @@
+ktor:
+    application:
+        modules:
+            - de.sharpmind.ktor.ApplicationKt.module
+    deployment:
+        port: "$PORT:8080"
+
+envConfig:
+    env: "$ENVIRONMENT:default"
+    externalConfigFile: "config/application-override.yaml"
+
+    default:
+        db_url: "https://com.company.superapp.test-123456.firebaseio.com"
+        enableTestAccounts: false
+
+    test:
+        enableTestAccounts: true
+
+    staging:
+        db_url: "https://com.company.superapp.staging-123456.firebaseio.com"
+
+    production:
+        db_url: "https://com.company.superapp.prod-123456.firebaseio.com"

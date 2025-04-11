@@ -10,7 +10,7 @@ The ktor-env-config library is designed to provide environment-aware configurati
 
 * main
   * Current active branch
-  * built for KTOR-2.x
+  * built for Ktor-2.x, Ktor-3.x
   * jar file versions 2.x
 * ktor-1.x
   * ktor-env-config for KTOR-1.x
@@ -30,6 +30,14 @@ In your `build.gradle.kts`, add:
     implementation("de.sharpmind.ktor:ktor-env-config:<version>")
 
 Replace `<version>` by one [release version](https://github.com/sharpmind-de/ktor-env-config/releases) of the project.
+
+Current Release:
+
+[![Maven Central](https://img.shields.io/maven-central/v/de.sharpmind.ktor/ktor-env-config)](https://search.maven.org/artifact/de.sharpmind.ktor/ktor-env-config)
+
+    implementation("de.sharpmind.ktor:ktor-env-config:2.1.1")
+
+
 
 ## Usage
 
@@ -81,6 +89,37 @@ To use a different variable, modify the line `env = ${?ENVIRONMENT}` with your p
 The default configuration for the service can be found in the `envConfig.default` block. For other environments, override the default configuration by using a block with the same name as the environment.
 
 If a property is not specified in a specific environment, it will use the default value. Only overwrite properties in specific environments if they differ from the default value.
+
+### External Configuration File
+In addition to defining configuration properties directly within your application.conf, you can also specify an external configuration file. This is particularly useful if you want to separate sensitive or environment-specific values from the main configuration or keep different files for local development, CI, staging, or production environments.
+
+To use an external config file, define the file path in the envConfig.externalConfigFile key. The file should follow the same format as application.conf and can contain any supported configuration values, including environment-specific blocks. Example:
+
+```
+envConfig.externalConfigFile = "/etc/configs/my-app-config.conf"
+```
+
+This path can also be specified using environment variable substitution:
+
+```
+envConfig.externalConfigFile = ${?MY_APP_CONFIG}
+```
+When specified, the external config file will be parsed and merged into the existing configuration.
+
+### Configuration Override Strategy
+The ktor-env-config library uses a prioritized override strategy to determine the final configuration values. This allows you to set base defaults while also allowing environment-specific and external overrides. The order of precedence (from lowest to highest priority) is as follows:
+
+1. Default block (envConfig.default): Base configuration that applies to all environments unless explicitly overridden.
+
+2. Environment-specific block (envConfig.test, envConfig.staging, envConfig.production, etc.): Overrides values in the default block for a specific environment.
+
+3. External config file (envConfig.externalConfigFile): Has the highest priority and overrides both the default and environment-specific values if present.
+
+This means that if a value is defined in all three places, the value from the external configuration file will take effect.
+
+This approach provides a clean and flexible way to manage configuration in different contexts without hardcoding or duplicating properties.
+
+
 ### initialize EnvConfig
 
 The EnvConfig object has to be initialized with the ktor configuration. A good place is the ```Application.module()``` extension function.
@@ -211,6 +250,30 @@ If you're running your service as a standalone JAR file using the java -jar comm
 
 ```
 java -DENVIRONMENT=staging -jar yourapp.jar
+```
+
+#### gradle
+
+During development, you certainly run the project via gradle. In this case set the environment variable before running the gradle command. For example:
+
+```
+# Unix-based systems
+ENVIRONMENT=test ./gradlew run
+```
+
+or
+
+```
+# Windows systems
+set ENVIRONMENT=test
+gradlew run
+
+```
+#### IntelliJ IDEA
+If you're using IntelliJ IDEA, you can set the environment variable in the Run/Debug Configurations. Go to Run > Edit Configurations, select your run configuration, and add the environment variable in the Environment Variables field. For example:
+
+``` 
+ENVIRONMENT=staging
 ```
 
 #### docker run
