@@ -1,6 +1,7 @@
 package de.sharpmind.ktor.config
 
 import ConfigCore
+import de.sharpmind.ktor.EnvConfig
 import de.sharpmind.ktor.exceptions.NotInitializedException
 import io.ktor.server.config.*
 import org.slf4j.LoggerFactory
@@ -16,7 +17,7 @@ class ConfigCoreImpl : ConfigCore {
 
     private lateinit var config: ApplicationConfig
     private var extConfig: ApplicationConfig? = null
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = LoggerFactory.getLogger(EnvConfig.loggerName)
     private var environment: String = DEFAULT_ENVIRONMENT
 
     override fun initConfig(config: ApplicationConfig, verbose: Boolean): ConfigCore =
@@ -28,6 +29,8 @@ class ConfigCoreImpl : ConfigCore {
             config.propertyOrNull("$ROOT_NODE.$ENVIRONMENT_NODE")?.getString()?.let { customEnv ->
                 environment = customEnv
             }
+
+            logger.info("Initializing EnvConfig with environment: $environment")
 
             // set external config file if configured and existent
             this.extConfig = null
@@ -61,9 +64,14 @@ class ConfigCoreImpl : ConfigCore {
             mergedConfig[k] = v.toString()
         }
 
-        if (config.config(ROOT_NODE).config(environment) != null) {
-            config.config(ROOT_NODE).config(environment).toMap().forEach { (k, v) ->
-                mergedConfig[k] = v.toString()
+        // merge the default config with the environment config
+        if (environment != DEFAULT_ENVIRONMENT) {
+            try {
+                config.config(ROOT_NODE).config(environment).toMap().forEach { (k, v) ->
+                    mergedConfig[k] = v.toString()
+                }
+            } catch (e: Exception) {
+                logger.warn("No config found for environment $environment. Using default config.")
             }
         }
 

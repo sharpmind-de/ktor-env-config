@@ -8,9 +8,7 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     // initialize EnvConfig with the environment config
-    EnvConfig.initConfig(environment.config)
-
-    println("EnvConfig: ${EnvConfig.getEnvironment()}")
+    EnvConfig.initConfig(environment.config, true)
 
     configureRouting()
 }

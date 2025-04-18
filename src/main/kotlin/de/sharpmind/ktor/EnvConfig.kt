@@ -1,3 +1,12 @@
+package de.sharpmind.ktor
+
+import BooleanConfig
+import ConfigCore
+import FileConfig
+import IntConfig
+import ListConfig
+import StringConfig
+import UrlConfig
 import de.sharpmind.ktor.config.*
 import io.ktor.server.config.*
 import java.io.File
@@ -5,6 +14,8 @@ import java.net.URL
 
 // The main EnvConfig class that uses delegation to implement all interfaces
 object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, ListConfig, FileConfig, UrlConfig {
+    val loggerName = "de.sharpmind.ktor.EnvConfig"
+
     private val configCore = ConfigCoreImpl()
     private val stringConfig by lazy { StringConfigImpl(configCore) }
     private val booleanConfig by lazy { BooleanConfigImpl(configCore) }

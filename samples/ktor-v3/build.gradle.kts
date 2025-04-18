@@ -25,6 +25,8 @@ dependencies {
     implementation(libs.ktor.server.core)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
-
-    implementation("de.sharpmind.ktor:ktor-env-config:2.1.1")
+    implementation(fileTree("../../build/libs") {
+        include("*.jar")
+    })
+    //implementation("de.sharpmind.ktor:ktor-env-config:2.2.1")
 }

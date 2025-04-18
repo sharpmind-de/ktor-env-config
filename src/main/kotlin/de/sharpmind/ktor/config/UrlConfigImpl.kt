@@ -2,12 +2,13 @@ package de.sharpmind.ktor.config
 
 import StringConfig
 import UrlConfig
+import de.sharpmind.ktor.EnvConfig
 import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
 import java.net.URL
 
 class UrlConfigImpl(private val configCore: ConfigCoreImpl, private val stringConfig: StringConfig) : UrlConfig {
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = LoggerFactory.getLogger(EnvConfig.loggerName)
 
     override fun getUrl(propertyKey: String): URL {
         val url = stringConfig.getString(propertyKey)
