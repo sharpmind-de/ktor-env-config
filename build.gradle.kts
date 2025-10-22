@@ -1,7 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 val kotlin_version: String by project
-val ktor2_version: String by project
+val ktor3_version: String by project
 
 buildscript {
     repositories {
@@ -11,8 +9,7 @@ buildscript {
 
 plugins {
     `java-library`
-    kotlin("jvm") version "1.8.0"
-
+    kotlin("jvm") version "2.2.20"
     `maven-publish`
     signing
     id("net.researchgate.release") version "3.0.2"
@@ -24,33 +21,35 @@ repositories {
     mavenCentral()
 }
 
-// Set JVM toolchain - this is the recommended approach
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
 // For compatibility, also set Java toolchain
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
+
+    // make compatible with Java 17
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+
     withJavadocJar()
     withSourcesJar()
 }
 
-tasks.compileJava {
-    options.encoding = "UTF-8"
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        freeCompilerArgs.add("-Xjsr305=strict")
+    }
 }
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+tasks.compileJava {
+    options.encoding = "UTF-8"
 }
 
 java {
@@ -60,9 +59,9 @@ java {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
-    implementation("io.ktor:ktor-server-core:$ktor2_version")
+    implementation("io.ktor:ktor-server-core:$ktor3_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
-    testImplementation("org.slf4j:slf4j-simple:2.0.13")
+    testImplementation("org.slf4j:slf4j-simple:2.0.17")
 }
 
 publishing {
@@ -110,8 +109,9 @@ publishing {
 
 signing {
     if (project.hasProperty("signing.keyId") &&
-            project.hasProperty("signing.password") &&
-            project.hasProperty("signing.secretKeyRingFile")) {
+        project.hasProperty("signing.password") &&
+        project.hasProperty("signing.secretKeyRingFile")
+    ) {
         sign(publishing.publications["mavenJava"])
     }
 }
