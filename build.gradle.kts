@@ -1,3 +1,5 @@
+import java.net.URL
+
 val kotlin_version: String by project
 val ktor3_version: String by project
 
@@ -11,6 +13,7 @@ plugins {
     `java-library`
     kotlin("jvm") version "2.2.20"
     `maven-publish`
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     signing
     id("net.researchgate.release") version "3.0.2"
 }
@@ -97,12 +100,23 @@ publishing {
 
     repositories {
         maven {
-            name = "OSSRH"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            name = "ossrh-staging-api"
+            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
             credentials {
                 username = project.findProperty("OSSRH_USERNAME") as String? ?: System.getenv("OSSRH_USERNAME") ?: ""
                 password = project.findProperty("OSSRH_PASSWORD") as String? ?: System.getenv("OSSRH_PASSWORD") ?: ""
             }
+        }
+    }
+}
+
+
+nexusPublishing {
+    repositories {
+        // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
