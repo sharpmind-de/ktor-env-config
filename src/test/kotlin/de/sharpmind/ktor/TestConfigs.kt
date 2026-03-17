@@ -92,3 +92,41 @@ val testConfigE = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG F: list from comma-separated string (e.g. env var)
+val testConfigF = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                listFromString = "foo,bar,baz"
+                listWithSpaces = "one , two , three"
+            }
+
+            testEnv {
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG G: custom list delimiter
+val testConfigG = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                listDelimiter = ";"
+                listFromString = "alpha;beta;gamma"
+            }
+
+            testEnv {
+            }
+        }
+        """.trimIndent()
+    )
+)

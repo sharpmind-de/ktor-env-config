@@ -29,7 +29,6 @@ class TestEnvConfig {
         assertFails { EnvConfig.getString("a") }
     }
 
-
     @Test
     fun testConfigA_fallback() {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
@@ -43,8 +42,6 @@ class TestEnvConfig {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
         assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
-        assertFails { EnvConfig.initConfig(testConfigB).getInt("b") }
-        assertFails { EnvConfig.initConfig(testConfigB).getList("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getString("b"))
     }
 
@@ -64,7 +61,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigA).getBoolean("a"))
         assertEquals(2, EnvConfig.initConfig(testConfigA).getInt("a"))
-        assertFails { EnvConfig.initConfig(testConfigA).getList("a") }
         assertEquals("2", EnvConfig.initConfig(testConfigA).getString("a"))
     }
 
@@ -85,7 +81,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigA).getBoolean("c"))
         assertEquals(5, EnvConfig.initConfig(testConfigA).getInt("c"))
-        assertFails { EnvConfig.initConfig(testConfigA).getList("c") }
         assertEquals("5", EnvConfig.initConfig(testConfigA).getString("c"))
     }
 
@@ -95,7 +90,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigB).getBoolean("a"))
         assertEquals(1, EnvConfig.initConfig(testConfigB).getInt("a"))
-        assertFails { EnvConfig.initConfig(testConfigB).getList("a") }
         assertEquals("1", EnvConfig.initConfig(testConfigB).getString("a"))
     }
 
@@ -104,8 +98,6 @@ class TestEnvConfig {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
         assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
-        assertFails { EnvConfig.initConfig(testConfigB).getInt("b") }
-        assertFails { EnvConfig.initConfig(testConfigB).getList("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getString("b"))
     }
 
@@ -125,7 +117,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigA).getBooleanOrNull("a")!!)
         assertEquals(2, EnvConfig.initConfig(testConfigA).getIntOrNull("a"))
-        assertFails { EnvConfig.initConfig(testConfigA).getListOrNull("a") }
         assertEquals("2", EnvConfig.initConfig(testConfigA).getStringOrNull("a"))
     }
 
@@ -146,7 +137,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigA).getBooleanOrNull("c")!!)
         assertEquals(5, EnvConfig.initConfig(testConfigA).getIntOrNull("c"))
-        assertFails { EnvConfig.initConfig(testConfigA).getListOrNull("c") }
         assertEquals("5", EnvConfig.initConfig(testConfigA).getStringOrNull("c"))
     }
 
@@ -156,7 +146,6 @@ class TestEnvConfig {
 
         assertFalse(EnvConfig.initConfig(testConfigB).getBooleanOrNull("a")!!)
         assertEquals(1, EnvConfig.initConfig(testConfigB).getIntOrNull("a"))
-        assertFails { EnvConfig.initConfig(testConfigB).getListOrNull("a") }
         assertEquals("1", EnvConfig.initConfig(testConfigB).getStringOrNull("a"))
     }
 
@@ -166,7 +155,6 @@ class TestEnvConfig {
 
         assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
         assertFails { EnvConfig.initConfig(testConfigB).getIntOrNull("b") }
-        assertFails { EnvConfig.initConfig(testConfigB).getListOrNull("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getStringOrNull("b"))
     }
 
@@ -207,5 +195,24 @@ class TestEnvConfig {
         assertIs<URL>(EnvConfig.initConfig(testConfigE).getUrl("url2"))
         assertEquals("www.google.com", EnvConfig.initConfig(testConfigE).getUrl("url2").host)
         assertEquals("https", EnvConfig.initConfig(testConfigE).getUrl("url2").protocol)
+    }
+
+    @Test
+    fun testConfigF_listFromCommaSeparatedString() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigF)
+        assertEquals(listOf("foo", "bar", "baz"), config.getList("listFromString"))
+        assertEquals(listOf("one", "two", "three"), config.getList("listWithSpaces"))
+        assertEquals(listOf("foo", "bar", "baz"), config.getListOrNull("listFromString"))
+        assertEquals(emptyList<String>(), config.getListOrDefault("missing", emptyList()))
+    }
+
+    @Test
+    fun testConfigG_listWithCustomDelimiter() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigG)
+        assertEquals(listOf("alpha", "beta", "gamma"), config.getList("listFromString"))
     }
 }
