@@ -43,6 +43,8 @@ In your `build.gradle.kts`, add:
 
 Replace `<version>` by one [release version](https://github.com/sharpmind-de/ktor-env-config/releases) of the project.
 
+Breaking changes are documented in [CHANGELOG.md](CHANGELOG.md) and in the [GitHub release notes](https://github.com/sharpmind-de/ktor-env-config/releases) for each version.
+
 Current Release:
 
 [![Maven Central](https://img.shields.io/maven-central/v/de.sharpmind.ktor/ktor-env-config)](https://search.maven.org/artifact/de.sharpmind.ktor/ktor-env-config)
@@ -155,6 +157,14 @@ effect.
 This approach provides a clean and flexible way to manage configuration in different contexts without hardcoding or
 duplicating properties.
 
+### Environment variable substitution
+
+Configuration values can be overridden at runtime using environment variables. The underlying config (e.g. HOCON) supports optional substitution with `${?VAR_NAME}`: if the environment variable is set, it is used; otherwise the previous value (or default) is kept.
+
+- **Optional substitution**: Use `key = ${?ENV_VAR}` so the key is only set when `ENV_VAR` is defined. This lets you define defaults in `envConfig.default` and override them per environment or via the environment.
+- **Where it applies**: Any config key can be wired to an env var this way, including `env` (e.g. `env = ${?ENVIRONMENT}`), `externalConfigFile`, and application keys like `db_url`, `LOG_LEVEL`, or list values (see "type evaluation → list" for list parsing from strings).
+- **List values**: To pass a list from an environment variable, set the value to a delimiter-separated string (e.g. `allowedHosts = ${?ALLOWED_HOSTS}` with `ALLOWED_HOSTS=host1,host2,host3`). The list delimiter can be overridden with the `listDelimiter` config key if needed.
+
 ### initialize EnvConfig
 
 The EnvConfig object has to be initialized with the ktor configuration. A good place is the ```Application.module()```
@@ -250,6 +260,29 @@ public static boolean parseBoolean(String s) {
 ```
 
 So everything is considered to be false, except for the string `"true"`, evaluated case-insensitive.
+
+#### list
+
+If `getList*()` methods are used, the configured property value is first interpreted as a list (e.g. HOCON `["a", "b", "c"]`). If that fails (for example when the value comes from an environment variable and is a single string), the value is parsed as a **delimiter-separated string**. Elements are split by the delimiter and trimmed of surrounding whitespace.
+
+- **Delimiter**: The default delimiter is comma (`,`). You can override it with the optional config key `listDelimiter` (for example set via environment variable). The same config resolution applies as for other keys (e.g. `envConfig.default.listDelimiter` or in an environment block).
+- **Values without `[]`**: When the value is a plain string (no HOCON list syntax), it is split by the delimiter and trimmed. So `"foo,bar,baz"` becomes `["foo", "bar", "baz"]`, and a single value like `"only"` becomes `["only"]`.
+
+Example (e.g. in config or via env):
+
+```
+# default delimiter (comma)
+allowedHosts = "localhost,127.0.0.1,example.com"
+
+# custom delimiter via listDelimiter (e.g. listDelimiter = ";")
+allowedHosts = "localhost;127.0.0.1;example.com"
+```
+
+### Breaking changes
+
+Breaking changes are listed in [CHANGELOG.md](CHANGELOG.md) (under a `### Breaking` subsection per release) and summarized in the [GitHub release notes](https://github.com/sharpmind-de/ktor-env-config/releases).
+
+**Current release:** Previously, requesting a list (e.g. `getList(...)`) for a value that was a string (delimiter-separated or otherwise) would throw an exception. Now such a value is parsed as a list: delimiter-separated strings become multiple elements, and a string without the delimiter produces a single-element list.
 
 ### internal information ###
 
