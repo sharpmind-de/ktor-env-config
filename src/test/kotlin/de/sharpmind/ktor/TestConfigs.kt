@@ -103,6 +103,8 @@ val testConfigF = HoconApplicationConfig(
             default {
                 listFromString = "foo,bar,baz"
                 listWithSpaces = "one , two , three"
+                listDelimiterAtStart = ",foo,bar"
+                listDelimiterAtEnd = "foo,bar,"
             }
 
             testEnv {

@@ -42,6 +42,7 @@ class TestEnvConfig {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
         assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
+        assertFails { EnvConfig.initConfig(testConfigB).getInt("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getString("b"))
     }
 
@@ -98,6 +99,7 @@ class TestEnvConfig {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 
         assertTrue(EnvConfig.initConfig(testConfigB).getBoolean("b"))
+        assertFails { EnvConfig.initConfig(testConfigB).getInt("b") }
         assertEquals("True", EnvConfig.initConfig(testConfigB).getString("b"))
     }
 
@@ -206,6 +208,10 @@ class TestEnvConfig {
         assertEquals(listOf("one", "two", "three"), config.getList("listWithSpaces"))
         assertEquals(listOf("foo", "bar", "baz"), config.getListOrNull("listFromString"))
         assertEquals(emptyList<String>(), config.getListOrDefault("missing", emptyList()))
+        // separator at beginning: leading empty element after split/trim
+        assertEquals(listOf("", "foo", "bar"), config.getList("listDelimiterAtStart"))
+        // separator at end: trailing empty element after split/trim
+        assertEquals(listOf("foo", "bar", ""), config.getList("listDelimiterAtEnd"))
     }
 
     @Test
