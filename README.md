@@ -222,9 +222,12 @@ EnvConfig.getList(key: String): List<String>
 EnvConfig.getString(key: String): String
 EnvConfig.getFile(key: String): File
 EnvConfig.getUrl(key: String): URL
+EnvConfig.getByte(key: String): Byte
+EnvConfig.getLong(key: String): Long
+EnvConfig.getDouble(key: String): Double
 ```
 
-#### Return value is nullable, returns null if key does not exist or if requested type can't be instantiated from specified config value..
+#### Return value is nullable, returns null if key does not exist or if requested type can't be instantiated from specified config value.
 
 ```
 EnvConfig.getBooleanOrNull(key: String): Boolean?
@@ -233,6 +236,9 @@ EnvConfig.getListOrNull(key: String): List<String>?
 EnvConfig.getStringOrNull(key: String): String?
 EnvConfig.getFileOrNull(key: String): File?
 EnvConfig.getUrlOrNull(key: String): URL?
+EnvConfig.getByteOrNull(key: String): Byte?
+EnvConfig.getLongOrNull(key: String): Long?
+EnvConfig.getDoubleOrNull(key: String): Double?
 ```
 
 #### Return value is not null, returns default value if key does not exist or if requested type can't be instantiated from specified config value.
@@ -244,6 +250,9 @@ EnvConfig.getListOrDefault(key: String, default: List<String>): List<String>
 EnvConfig.getStringOrDefault(key: String, default: String): String
 EnvConfig.getFileOrDefault(key: String, default: String): File
 EnvConfig.getUrlOrDefault(key: String, default: String): URL
+EnvConfig.getByteOrDefault(key: String, defaultVal: Byte): Byte
+EnvConfig.getLongOrDefault(key: String, defaultVal: Long): Long
+EnvConfig.getDoubleOrDefault(key: String, defaultVal: Double): Double
 ```
 
 ### type evaluation
@@ -277,6 +286,28 @@ allowedHosts = "localhost,127.0.0.1,example.com"
 # custom delimiter via listDelimiter (e.g. listDelimiter = ";")
 allowedHosts = "localhost;127.0.0.1;example.com"
 ```
+
+#### byte
+
+The configured property value is interpreted as a decimal or hexadecimal byte value.
+Hexadecimal notation is supported (e.g. `0x30` evaluates to `48`).
+
+- **Valid range**: `-128` to `127` (signed byte)
+- **Overflow**: Values outside this range (e.g. `128`, `0x100`, `256`) throw a `NumberFormatException`
+
+**Note:** If you need to store a byte value greater than `127`, use `getInt` in your application code
+and cast the result to `Byte` as needed.
+
+#### long
+
+The configured property value is interpreted as a decimal or hexadecimal long value.
+Hexadecimal notation is supported (e.g. `0xFF` evaluates to `255`).
+
+#### double
+
+The configured property value is interpreted as a double-precision floating-point number.
+Plain decimal notation is supported (e.g. `3.14159`, `42`, `353245.1235235345`).
+Hexadecimal floating-point notation is also supported (e.g. `0x1.0p0` evaluates to `1.0`).
 
 ### Breaking changes
 

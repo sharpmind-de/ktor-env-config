@@ -1,10 +1,13 @@
 package de.sharpmind.ktor
 
 import BooleanConfig
+import ByteConfig
 import ConfigCore
+import DoubleConfig
 import FileConfig
 import IntConfig
 import ListConfig
+import LongConfig
 import StringConfig
 import UrlConfig
 import de.sharpmind.ktor.config.*
@@ -13,13 +16,16 @@ import java.io.File
 import java.net.URL
 
 // The main EnvConfig class that uses delegation to implement all interfaces
-object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, ListConfig, FileConfig, UrlConfig {
+object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfig, DoubleConfig, ByteConfig, ListConfig, FileConfig, UrlConfig {
     val loggerName = "de.sharpmind.ktor.EnvConfig"
 
     private val configCore = ConfigCoreImpl()
     private val stringConfig by lazy { StringConfigImpl(configCore) }
     private val booleanConfig by lazy { BooleanConfigImpl(configCore) }
     private val intConfig by lazy { IntConfigImpl(configCore) }
+    private val longConfig by lazy { LongConfigImpl(configCore) }
+    private val doubleConfig by lazy { DoubleConfigImpl(configCore) }
+    private val byteConfig by lazy { ByteConfigImpl(configCore) }
     private val listConfig by lazy { ListConfigImpl(configCore) }
     private val fileConfig by lazy { FileConfigImpl(configCore, stringConfig) }
     private val urlConfig by lazy { UrlConfigImpl(configCore, stringConfig) }
@@ -54,6 +60,24 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, ListConfi
     override fun getIntOrNull(propertyKey: String): Int? = intConfig.getIntOrNull(propertyKey)
     override fun getIntOrDefault(propertyKey: String, defaultVal: Int): Int =
         intConfig.getIntOrDefault(propertyKey, defaultVal)
+
+    // Delegate LongConfig methods
+    override fun getLong(propertyKey: String): Long = longConfig.getLong(propertyKey)
+    override fun getLongOrNull(propertyKey: String): Long? = longConfig.getLongOrNull(propertyKey)
+    override fun getLongOrDefault(propertyKey: String, defaultVal: Long): Long =
+        longConfig.getLongOrDefault(propertyKey, defaultVal)
+
+    // Delegate DoubleConfig methods
+    override fun getDouble(propertyKey: String): Double = doubleConfig.getDouble(propertyKey)
+    override fun getDoubleOrNull(propertyKey: String): Double? = doubleConfig.getDoubleOrNull(propertyKey)
+    override fun getDoubleOrDefault(propertyKey: String, defaultVal: Double): Double =
+        doubleConfig.getDoubleOrDefault(propertyKey, defaultVal)
+
+    // Delegate ByteConfig methods
+    override fun getByte(propertyKey: String): Byte = byteConfig.getByte(propertyKey)
+    override fun getByteOrNull(propertyKey: String): Byte? = byteConfig.getByteOrNull(propertyKey)
+    override fun getByteOrDefault(propertyKey: String, defaultVal: Byte): Byte =
+        byteConfig.getByteOrDefault(propertyKey, defaultVal)
 
     // Delegate ListConfig methods
     override fun getList(propertyKey: String): List<String> = listConfig.getList(propertyKey)

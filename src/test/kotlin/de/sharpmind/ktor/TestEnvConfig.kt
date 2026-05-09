@@ -27,6 +27,9 @@ class TestEnvConfig {
         assertFails { EnvConfig.getInt("a") }
         assertFails { EnvConfig.getList("a") }
         assertFails { EnvConfig.getString("a") }
+        assertFails { EnvConfig.getByte("a") }
+        assertFails { EnvConfig.getLong("a") }
+        assertFails { EnvConfig.getDouble("a") }
     }
 
     @Test
@@ -220,5 +223,54 @@ class TestEnvConfig {
 
         val config = EnvConfig.initConfig(testConfigG)
         assertEquals(listOf("alpha", "beta", "gamma"), config.getList("listFromString"))
+    }
+
+    @Test
+    fun testConfigH_bytes() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigH)
+        assertEquals(48.toByte(), config.getByte("byteHex"))
+        assertEquals(127.toByte(), config.getByte("byteDecimal"))
+        assertEquals(48.toByte(), config.getByteOrNull("byteHex"))
+        assertEquals(42.toByte(), config.getByteOrDefault("missing", 42.toByte()))
+        assertNull(config.getByteOrNull("missing"))
+    }
+
+    @Test
+    fun testConfigH_bytes_overflow() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigH)
+        // Values outside Byte range (-128 to 127) throw NumberFormatException
+        assertFailsWith<NumberFormatException> { config.getByte("byteOverflow") }
+        assertFailsWith<NumberFormatException> { config.getByteOrNull("byteOverflow") }
+        assertFailsWith<NumberFormatException> { config.getByteOrDefault("byteOverflow", 0) }
+        // 128 is outside signed byte range
+        assertFailsWith<NumberFormatException> { config.getByte("byte127plus1") }
+    }
+
+    @Test
+    fun testConfigH_longs() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigH)
+        assertEquals(-1L, config.getLong("longHex"))
+        assertEquals(1234567890123456L, config.getLong("longDecimal"))
+        assertEquals(-1L, config.getLongOrNull("longHex"))
+        assertEquals(99L, config.getLongOrDefault("missing", 99L))
+        assertNull(config.getLongOrNull("missing"))
+    }
+
+    @Test
+    fun testConfigH_doubles() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val config = EnvConfig.initConfig(testConfigH)
+        assertEquals(3.14159, config.getDouble("doubleValue"), 0.00001)
+        assertEquals(42.0, config.getDouble("doubleWhole"), 0.00001)
+        assertEquals(3.14159, config.getDoubleOrNull("doubleValue")!!, 0.00001)
+        assertEquals(2.718, config.getDoubleOrDefault("missing", 2.718), 0.00001)
+        assertNull(config.getDoubleOrNull("missing"))
     }
 }

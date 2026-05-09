@@ -132,3 +132,28 @@ val testConfigG = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG H: Numeric types including hex
+val testConfigH = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                byteHex = "0x30"
+                byteDecimal = "127"
+                byteOverflow = "0x1000"
+                byte127plus1 = "128"
+                longHex = "0xFFFFFFFFFFFFFFFF"
+                longDecimal = "1234567890123456"
+                doubleValue = "3.14159"
+                doubleWhole = "42"
+            }
+
+            testEnv {
+            }
+        }
+        """.trimIndent()
+    )
+)

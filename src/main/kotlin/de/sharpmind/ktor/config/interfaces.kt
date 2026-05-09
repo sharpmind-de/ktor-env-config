@@ -45,6 +45,33 @@ interface IntConfig {
 }
 
 /**
+ * Long configuration access
+ */
+interface LongConfig {
+    fun getLong(propertyKey: String): Long
+    fun getLongOrNull(propertyKey: String): Long?
+    fun getLongOrDefault(propertyKey: String, defaultVal: Long): Long
+}
+
+/**
+ * Double configuration access
+ */
+interface DoubleConfig {
+    fun getDouble(propertyKey: String): Double
+    fun getDoubleOrNull(propertyKey: String): Double?
+    fun getDoubleOrDefault(propertyKey: String, defaultVal: Double): Double
+}
+
+/**
+ * Byte configuration access (supports hex values like 0x30)
+ */
+interface ByteConfig {
+    fun getByte(propertyKey: String): Byte
+    fun getByteOrNull(propertyKey: String): Byte?
+    fun getByteOrDefault(propertyKey: String, defaultVal: Byte): Byte
+}
+
+/**
  * List configuration access
  */
 interface ListConfig {
