@@ -1,0 +1,15 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/sharpmind-de/ktor-env-config",
+  "public_key": "pk_zdAemlgTDC00JvNmiAF4I",
+  "projectTitle": "ktor-env-config",
+  "description": "Environment-aware, typed configuration for Ktor with defaults, environment-specific overrides, environment-variable substitution, and external configuration files.",
+  "branch": "main",
+  "folders": [],
+  "excludeFiles": ["CHANGELOG.md"],
+  "rules": [
+    "Use ktor-env-config 3.x with Ktor 3.x.",
+    "Initialize EnvConfig with application environment.config before reading values.",
+    "Define shared values in envConfig.default and override only environment-specific differences."
+  ]
+}
