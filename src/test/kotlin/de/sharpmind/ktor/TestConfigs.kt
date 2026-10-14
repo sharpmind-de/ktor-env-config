@@ -157,3 +157,24 @@ val testConfigH = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG I: external config file that does not exist
+val testConfigI = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+            externalConfigFile = "src/test/resources/does-not-exist.conf"
+
+            default {
+                a = 1
+                b = false
+            }
+
+            testEnv {
+                a = 2
+            }
+        }
+        """.trimIndent()
+    )
+)

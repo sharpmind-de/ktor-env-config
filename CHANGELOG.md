@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - `dumpConfig()` now includes values from the external config file, which previously were missing from the dump despite having the highest priority.
+- `initConfig()` now logs a warning when a configured external config file is missing or unsupported, instead of silently ignoring it. A missing external config file is by design not an error: initialization continues without external overrides.
 
 ### Breaking
 

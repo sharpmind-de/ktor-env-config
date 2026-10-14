@@ -32,14 +32,15 @@ class ConfigCoreImpl : ConfigCore {
 
             logger.info("Initializing EnvConfig with environment: $environment")
 
-            // set external config file if configured and existent
+            // A missing or unsupported external config file is not an error:
+            // log a warning and continue without external overrides
             this.extConfig = null
             config.propertyOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")?.getString()?.let { externalFilePath ->
-                HoconConfigLoader().load(externalFilePath)?.let { externalConfig ->
+                val externalConfig = HoconConfigLoader().load(externalFilePath)
+                if (externalConfig != null) {
                     extConfig = externalConfig
-                } ?: {
-                    logger.warn("External config file $externalFilePath not found or not supported")
-                    throw NotInitializedException("External config file $externalFilePath not found or not supported")
+                } else {
+                    logger.warn("External config file $externalFilePath not found or not supported - continuing without external overrides")
                 }
             }
 
