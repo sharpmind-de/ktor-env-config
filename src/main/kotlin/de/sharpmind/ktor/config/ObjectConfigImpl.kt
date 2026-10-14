@@ -81,14 +81,26 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
 
     private fun snakeCase(name: String): String = name.replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
 
-    private fun readValue(param: KParameter, leafPath: String): Any? = when (param.type.classifier) {
-        String::class -> stringConfig.getStringOrNull(leafPath)
-        Boolean::class -> booleanConfig.getBooleanOrNull(leafPath)
-        Int::class -> intConfig.getIntOrNull(leafPath)
-        Long::class -> longConfig.getLongOrNull(leafPath)
-        Double::class -> doubleConfig.getDoubleOrNull(leafPath)
-        Float::class -> stringConfig.getStringOrNull(leafPath)?.toFloatOrNull()
-        List::class -> listConfig.getListOrNull(leafPath)
-        else -> null
+    private fun readValue(param: KParameter, leafPath: String): Any? {
+        val classifier = param.type.classifier
+        return when {
+            classifier == String::class -> stringConfig.getStringOrNull(leafPath)
+            classifier == Boolean::class -> booleanConfig.getBooleanOrNull(leafPath)
+            classifier == Int::class -> intConfig.getIntOrNull(leafPath)
+            classifier == Long::class -> longConfig.getLongOrNull(leafPath)
+            classifier == Double::class -> doubleConfig.getDoubleOrNull(leafPath)
+            classifier == Float::class -> stringConfig.getStringOrNull(leafPath)?.toFloatOrNull()
+            // Only List<String> is supported: any other element type reads as missing
+            // instead of binding a List<String> value into a differently typed parameter
+            classifier == List::class && param.type.arguments.singleOrNull()?.type?.classifier == String::class ->
+                listConfig.getListOrNull(leafPath)
+            // Nested data class: an absent nested block reads as missing, so the
+            // default/null/throw rule applies; a nonempty block binds recursively
+            // with the nested block path as the new prefix
+            classifier is KClass<*> && classifier.primaryConstructor != null ->
+                if (configCore.getMergedConfig(leafPath).isEmpty()) null
+                else getObject(leafPath, classifier)
+            else -> null
+        }
     }
 }

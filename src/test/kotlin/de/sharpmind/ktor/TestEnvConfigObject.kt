@@ -80,4 +80,45 @@ class TestEnvConfigObject {
         // getObject never returns null: absent block with all defaults -> defaults object
         assertEquals(5, cfg.getObject("noSuchBlock", AllDefaultsConfig::class).x)
     }
+
+    @Test
+    fun test_getObject_listAndNestedBlock() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val obj = EnvConfig.initConfig(testConfigM).getObject("app", AppBlock::class)
+
+        // list: env block's comma-separated string wins over default's HOCON list
+        assertEquals(listOf("x", "y", "z"), obj.tags)
+        // nested block: host from default, port overridden by env block (deep chain)
+        assertEquals("db.internal", obj.db.host)
+        assertEquals(1234, obj.db.port)
+    }
+
+    @Test
+    fun test_getObject_nestedMissingRequiredThrows() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        // nested block present (has leaves) but a required nested property is missing
+        val ex = assertFailsWith<PropertyMissingException> {
+            EnvConfig.initConfig(testConfigM).getObject("nest", NestBlock::class)
+        }
+        assertTrue(ex.message!!.contains("nest.db.host"), "message was: ${ex.message}")
+    }
+
+    @Test
+    fun test_getObject_nestedMissingUsesDefaults() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        // nested block absent entirely + nullable nested param -> null
+        val obj = EnvConfig.initConfig(testConfigM).getObject("bare", BareBlock::class)
+        assertNull(obj.db)
+    }
+
+    @Test
+    fun test_getObject_unsupportedListElementTypeIsMissing() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        // List<Int> must not receive the List<String> value the dispatcher used to supply;
+        // the unsupported element type reads as missing and hits the default/null/throw rule
+        val ex = assertFailsWith<PropertyMissingException> {
+            EnvConfig.initConfig(testConfigN).getObject("intlist", IntListBlock::class)
+        }
+        assertTrue(ex.message!!.contains("intlist.items"), "message was: ${ex.message}")
+    }
 }

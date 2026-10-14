@@ -308,3 +308,42 @@ val testConfigL = HoconApplicationConfig(ConfigFactory.parseString("""
         testEnv { }
     }
 """.trimIndent()))
+
+// TEST CONFIG M: List<String> and nested data-class getObject binding
+data class DbConfig(val host: String, val port: Int = 5432)
+data class AppBlock(val db: DbConfig, val tags: List<String>)
+data class BareBlock(val db: DbConfig?)
+data class NestBlock(val db: DbConfig)
+
+val testConfigM = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            app {
+                db { host = "db.internal" }
+                tags = ["a", "b", "c"]
+            }
+            bare { }
+            nest { db { port = 1 } }
+        }
+        testEnv {
+            app {
+                db { port = 1234 }
+                tags = "x,y,z"
+            }
+        }
+    }
+""".trimIndent()))
+
+// TEST CONFIG N: unsupported list element type — List<Int> must not bind a List<String> value
+data class IntListBlock(val items: List<Int>)
+
+val testConfigN = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            intlist { items = [1, 2, 3] }
+        }
+        testEnv { }
+    }
+""".trimIndent()))
