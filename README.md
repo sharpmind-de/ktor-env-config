@@ -326,6 +326,10 @@ EnvConfig.getEnvironment(): String
 
 # returns a configured external config file, or null if none is configured
 EnvConfig.getExternalConfigFile(): String?
+
+# returns the full merged configuration as a flat map of property keys to string values
+# merge order (lowest to highest priority): default block, environment block, external config file
+EnvConfig.getMergedConfig(): Map<String, String>
 ```
 
 ### set ENVIRONMENT environment variable

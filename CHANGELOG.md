@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - List properties can be supplied as comma-separated strings (e.g. from environment variables). See README section "type evaluation → list".
 - Optional config key `listDelimiter` to override the list delimiter when parsing from a string (default: comma).
+- New method `EnvConfig.getMergedConfig(): Map<String, String>` returns the full merged configuration (default block, environment block, external config file) as a flat map.
+
+### Fixed
+
+- `dumpConfig()` now includes values from the external config file, which previously were missing from the dump despite having the highest priority.
 
 ### Breaking
 

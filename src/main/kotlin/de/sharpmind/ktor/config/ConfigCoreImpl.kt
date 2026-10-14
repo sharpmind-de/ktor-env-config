@@ -50,16 +50,15 @@ class ConfigCoreImpl : ConfigCore {
 
     override fun getExternalConfigFile(): String? = getPropertyValue(ROOT_NODE, EXT_CONFIG_NODE)?.getString()
 
-    override fun dumpConfig() {
+    override fun getMergedConfig(): Map<String, String> {
         if (!::config.isInitialized) {
             logger.warn("EnvConfig not initialized yet")
             throw NotInitializedException("Not initialized yet")
         }
 
-        logger.info("--- Dumping configuration for environment: $environment ---")
-
         val mergedConfig = mutableMapOf<String, String>()
 
+        // start with the default config
         config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap().forEach { (k, v) ->
             mergedConfig[k] = v.toString()
         }
@@ -74,6 +73,24 @@ class ConfigCoreImpl : ConfigCore {
                 logger.warn("No config found for environment $environment. Using default config.")
             }
         }
+
+        // external config file has the highest priority
+        extConfig?.toMap()?.forEach { (k, v) ->
+            mergedConfig[k] = v.toString()
+        }
+
+        return mergedConfig
+    }
+
+    override fun dumpConfig() {
+        if (!::config.isInitialized) {
+            logger.warn("EnvConfig not initialized yet")
+            throw NotInitializedException("Not initialized yet")
+        }
+
+        logger.info("--- Dumping configuration for environment: $environment ---")
+
+        val mergedConfig = getMergedConfig()
 
         logger.info("Environment: $environment")
         logger.info("External config file: ${getExternalConfigFile() ?: "none"}")

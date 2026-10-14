@@ -11,6 +11,7 @@ interface ConfigCore {
     fun initConfig(config: ApplicationConfig, verbose: Boolean = false): ConfigCore
     fun getEnvironment(): String
     fun getExternalConfigFile(): String?
+    fun getMergedConfig(): Map<String, String>
     fun dumpConfig()
 }
 

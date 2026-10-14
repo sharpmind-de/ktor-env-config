@@ -67,6 +67,14 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
 }
 
+tasks.test {
+    // EnvConfig is a singleton object shared across all test classes in one JVM.
+    // Run each test class in a fresh JVM so tests that rely on the
+    // uninitialized state (e.g. _TestUninitializedConfig_getA) do not depend
+    // on test class execution order.
+    forkEvery = 1
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
