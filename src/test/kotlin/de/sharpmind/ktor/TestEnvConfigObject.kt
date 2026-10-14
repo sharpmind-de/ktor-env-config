@@ -47,6 +47,20 @@ class TestEnvConfigObject {
     }
 
     @Test
+    fun test_getObjectOrNull_blockExistence() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val cfg = EnvConfig.initConfig(testConfigL)
+
+        // absent block -> null
+        assertNull(cfg.getObjectOrNull("noSuchBlock", AllDefaultsConfig::class))
+        // present block -> filled object
+        assertEquals(1, cfg.getObjectOrNull("defaults", DefaultsConfig::class)!!.present)
+        // present block (has leaves) with a required property missing -> still throws;
+        // null means "block absent", not "block invalid"
+        assertFailsWith<PropertyMissingException> { cfg.getObjectOrNull("partial", RequiredConfig::class) }
+    }
+
+    @Test
     fun test_getObject_missingProperty_defaultOrNullOrThrow() {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
         val cfg = EnvConfig.initConfig(testConfigL)

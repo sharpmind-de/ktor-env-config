@@ -23,6 +23,9 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
     private val doubleConfig = DoubleConfigImpl(configCore)
     private val listConfig = ListConfigImpl(configCore)
 
+    override fun <T : Any> getObjectOrNull(propertyKey: String, clazz: KClass<T>): T? =
+        if (configCore.getMergedConfig(propertyKey).isEmpty()) null else getObject(propertyKey, clazz)
+
     override fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T {
         val ctor = clazz.primaryConstructor
             ?: throw KeyNotFoundException("Class ${clazz.simpleName} has no primary constructor")

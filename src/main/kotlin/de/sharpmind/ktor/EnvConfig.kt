@@ -107,4 +107,7 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfi
     // Delegate ObjectConfig methods
     override fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T =
         objectConfig.getObject(propertyKey, clazz)
+
+    override fun <T : Any> getObjectOrNull(propertyKey: String, clazz: KClass<T>): T? =
+        objectConfig.getObjectOrNull(propertyKey, clazz)
 }

@@ -107,5 +107,6 @@ interface UrlConfig {
  */
 interface ObjectConfig {
     fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T
+    fun <T : Any> getObjectOrNull(propertyKey: String, clazz: KClass<T>): T?
 }
 
