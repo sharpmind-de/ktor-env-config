@@ -51,36 +51,66 @@ class ConfigCoreImpl : ConfigCore {
 
     override fun getExternalConfigFile(): String? = getPropertyValue(ROOT_NODE, EXT_CONFIG_NODE)?.getString()
 
-    override fun getMergedConfig(): Map<String, String> {
+    override fun getMergedConfig(): Map<String, String> = getMergedConfig("")
+
+    override fun getMergedConfig(blockPath: String): Map<String, String> {
         if (!::config.isInitialized) {
             logger.warn("EnvConfig not initialized yet")
             throw NotInitializedException("Not initialized yet")
         }
 
-        val mergedConfig = mutableMapOf<String, String>()
+        var merged: Map<String, Any?> = emptyMap()
+        merged = deepMerge(merged, config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap())
 
-        // start with the default config
-        config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap().forEach { (k, v) ->
-            mergedConfig[k] = v.toString()
-        }
-
-        // merge the default config with the environment config
         if (environment != DEFAULT_ENVIRONMENT) {
             try {
-                config.config(ROOT_NODE).config(environment).toMap().forEach { (k, v) ->
-                    mergedConfig[k] = v.toString()
-                }
+                merged = deepMerge(merged, config.config(ROOT_NODE).config(environment).toMap())
             } catch (e: Exception) {
                 logger.warn("No config found for environment $environment. Using default config.")
             }
         }
 
         // external config file has the highest priority
-        extConfig?.toMap()?.forEach { (k, v) ->
-            mergedConfig[k] = v.toString()
-        }
+        extConfig?.let { merged = deepMerge(merged, it.toMap()) }
 
-        return mergedConfig
+        val flattened = flatten(merged)
+        if (blockPath.isEmpty()) return flattened
+
+        val prefix = "$blockPath."
+        return flattened
+            .filterKeys { it.startsWith(prefix) }
+            .mapKeys { (key, _) -> key.removePrefix(prefix) }
+    }
+
+    private fun deepMerge(base: Map<String, Any?>, override: Map<String, Any?>): Map<String, Any?> {
+        val result = base.toMutableMap()
+        override.forEach { (key, value) ->
+            val baseValue = result[key]
+            result[key] = if (baseValue is Map<*, *> && value is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                deepMerge(baseValue as Map<String, Any?>, value as Map<String, Any?>)
+            } else {
+                value
+            }
+        }
+        return result
+    }
+
+    private fun flatten(
+        values: Map<String, Any?>,
+        prefix: String = "",
+        result: MutableMap<String, String> = mutableMapOf()
+    ): Map<String, String> {
+        values.forEach { (key, value) ->
+            val path = if (prefix.isEmpty()) key else "$prefix.$key"
+            if (value is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                flatten(value as Map<String, Any?>, path, result)
+            } else if (value != null) {
+                result[path] = value.toString()
+            }
+        }
+        return result
     }
 
     override fun dumpConfig() {

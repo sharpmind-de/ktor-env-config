@@ -12,6 +12,7 @@ interface ConfigCore {
     fun getEnvironment(): String
     fun getExternalConfigFile(): String?
     fun getMergedConfig(): Map<String, String>
+    fun getMergedConfig(blockPath: String): Map<String, String>
     fun dumpConfig()
 }
 

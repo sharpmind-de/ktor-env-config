@@ -37,6 +37,7 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfi
     override fun getEnvironment(): String = configCore.getEnvironment()
     override fun getExternalConfigFile(): String? = configCore.getExternalConfigFile()
     override fun getMergedConfig(): Map<String, String> = configCore.getMergedConfig()
+    override fun getMergedConfig(blockPath: String): Map<String, String> = configCore.getMergedConfig(blockPath)
     override fun dumpConfig() = configCore.dumpConfig()
 
     // Delegate StringConfig methods

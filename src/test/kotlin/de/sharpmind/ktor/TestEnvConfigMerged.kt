@@ -52,4 +52,32 @@ class TestEnvConfigMerged {
         assertEquals("1", merged["a"])
         assertEquals("True", merged["b"])
     }
+
+    @Test
+    fun test_merged_deepMergesNestedBlock() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val merged = EnvConfig.initConfig(testConfigJ).getMergedConfig()
+
+        assertEquals("true", merged["polling.status_enabled"])
+        assertEquals("300", merged["polling.status_freq_secs"])
+        assertEquals("1200", merged["polling.stale_after_secs"])
+        assertEquals("900", merged["polling.version_freq_secs"])
+        assertFalse(merged.containsKey("polling"))
+    }
+
+    @Test
+    fun test_merged_blockPathReturnsRelativeKeys() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+
+        val merged = EnvConfig.initConfig(testConfigJ).getMergedConfig("polling")
+
+        assertEquals("true", merged["status_enabled"])
+        assertEquals("300", merged["status_freq_secs"])
+        assertEquals("1200", merged["stale_after_secs"])
+        assertEquals("900", merged["version_freq_secs"])
+        assertTrue(merged.keys.none { it.startsWith("polling.") })
+        assertTrue(EnvConfig.getMergedConfig("missing").isEmpty())
+    }
+
 }

@@ -158,6 +158,35 @@ val testConfigH = HoconApplicationConfig(
     )
 )
 
+// TEST CONFIG J: nested config with default, environment, and external overrides
+val testConfigJ = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+            externalConfigFile = "src/test/resources/test-merge.conf"
+
+            default {
+                a = 1
+                polling {
+                    status_enabled = true
+                    status_freq_secs = 600
+                    version_freq_secs = 3600
+                    stale_after_secs = 1200
+                }
+            }
+
+            testEnv {
+                polling {
+                    status_freq_secs = 300
+                    version_freq_secs = 1800
+                }
+            }
+        }
+        """.trimIndent()
+    )
+)
+
 // TEST CONFIG I: external config file that does not exist
 val testConfigI = HoconApplicationConfig(
     ConfigFactory.parseString(
