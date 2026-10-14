@@ -505,6 +505,14 @@ fun test_getObject_unsupportedTypeThrows() {
 }
 
 @Test
+fun test_getObject_unsupportedListElementTypeThrows() {
+    println("Running test: " + object {}.javaClass.enclosingMethod.name)
+    assertFailsWith<UnsupportedTypeException> {
+        EnvConfig.initConfig(testConfigN).getObject("intlist", IntListBlock::class)
+    }
+}
+
+@Test
 fun test_getObject_reifiedConvenience() {
     println("Running test: " + object {}.javaClass.enclosingMethod.name)
     val viaReified = EnvConfig.initConfig(testConfigK).getObject<PollingConfig>("polling")
@@ -516,6 +524,11 @@ fun test_getObject_reifiedConvenience() {
 ```kotlin
 // TestConfigs.kt
 data class WeirdTypeConfig(val unsupported: Map<String, String>)
+data class IntListBlock(val items: List<Int>)
+
+val testConfigN = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig { default { intlist { items = [1, 2] } } }
+""".trimIndent()))
 ```
 
 Note: `_TestUninitialized_getObject` relies on this test class running in its own JVM (`forkEvery = 1`, already configured) and on `@FixMethodOrder(MethodSorters.NAME_ASCENDING)` so it executes before any other test initializes the `EnvConfig` singleton — same pattern as `TestEnvConfig._TestUninitializedConfig_getA`.
@@ -527,7 +540,8 @@ Expected: FAIL — `UnsupportedTypeException` unresolved, `getObject<PollingConf
 
 - [ ] **Step 3: Implement**
 
-- In the type dispatch, add an explicit final `else ->` branch that throws `UnsupportedTypeException("Property type ... of $leafPath is not supported by getObject")` (until now, unmatched classifiers fell through to the missing-value rule — the message must contain the leaf path).
+- In the type dispatch, validate the `List` element classifier: only `List<String>` is supported; `List<Int>` (and other element types) must go to the explicit final `else ->` branch and throw `UnsupportedTypeException`, not `PropertyMissingException`.
+- Add the explicit final `else ->` branch that throws `UnsupportedTypeException("Property type ... of $leafPath is not supported by getObject")` (until now, unmatched classifiers fell through to the missing-value rule — the message must contain the leaf path).
 - On the `EnvConfig` object: `inline fun <reified T : Any> getObject(propertyKey: String): T = getObject(propertyKey, T::class)` and the `getObjectOrNull` twin.
 
 - [ ] **Step 4: Run test to verify it passes, then full suite**
