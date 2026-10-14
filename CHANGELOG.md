@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Breaking
 
+- The new method `getMergedConfig()` was added to the public `ConfigCore` interface **without a default implementation**. Code implementing `ConfigCore` directly (other than the provided `EnvConfig`/`ConfigCoreImpl`) must add this method to compile against this version — source-incompatible. Consumers of the `EnvConfig` object are not affected.
 - Previously, requesting a list (e.g. `getList(...)`) for a value that was a string (delimiter-separated or otherwise) would throw an exception. Now such a value is parsed as a list: delimiter-separated strings become multiple elements, and a string without the delimiter produces a single-element list.
 
 ## [3.0.0] and earlier
