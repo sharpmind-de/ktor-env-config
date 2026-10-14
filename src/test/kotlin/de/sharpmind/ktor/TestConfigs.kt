@@ -291,3 +291,20 @@ val testConfigExact = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG L: missing-property rule — constructor defaults, nullable null, unparsable-as-missing
+data class DefaultsConfig(val present: Int, val absent: Int = 42, val maybe: String?, val bad: Int = 42)
+data class RequiredConfig(val requiredValue: Int)
+data class AllDefaultsConfig(val x: Int = 5)
+
+val testConfigL = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            defaults { present = 1, bad = "abc" }
+            required { }
+            partial { other = 1 }     # block with leaves but without requiredValue — used by Task 4
+        }
+        testEnv { }
+    }
+""".trimIndent()))

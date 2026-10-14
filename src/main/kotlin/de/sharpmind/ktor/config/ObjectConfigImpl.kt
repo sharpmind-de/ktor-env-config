@@ -27,17 +27,28 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
         val ctor = clazz.primaryConstructor
             ?: throw KeyNotFoundException("Class ${clazz.simpleName} has no primary constructor")
 
-        val args = mutableMapOf<KParameter, Any>()
+        val args = mutableMapOf<KParameter, Any?>()
         val properties = clazz.memberProperties.associateBy { it.name }
         for (param in ctor.parameters) {
             val keyCandidates = keyCandidates(param, properties[param.name])
             // If no candidate resolves, the error points at the snake_case form
             val errorPath = "$propertyKey.${keyCandidates.last()}"
             val value = keyCandidates.firstNotNullOfOrNull { candidate ->
-                readValue(param, "$propertyKey.$candidate")?.let { it to candidate }
-            }?.first
-            args[param] = value
-                ?: throw PropertyMissingException("Property $errorPath does not exist and has no default value")
+                // An unparsable value counts as missing. NotInitializedException extends
+                // Throwable, not Exception, so it still propagates out of here.
+                try {
+                    readValue(param, "$propertyKey.$candidate")
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            when {
+                value != null -> args[param] = value
+                // Omit the parameter from args so callBy applies the constructor default
+                param.isOptional -> Unit
+                param.type.isMarkedNullable -> args[param] = null
+                else -> throw PropertyMissingException("Property $errorPath does not exist and has no default value")
+            }
         }
 
         return ctor.callBy(args)
