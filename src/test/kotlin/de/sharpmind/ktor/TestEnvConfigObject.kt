@@ -81,6 +81,24 @@ class TestEnvConfigObject {
     }
 
     @Test
+    fun test_getObject_noDefaultBlockBindsNestedEnvironmentOnlyObject() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val obj = EnvConfig.initConfig(testConfigO).getObject("app", AppBlock::class)
+
+        assertEquals("env-db.internal", obj.db.host)
+        assertEquals(5432, obj.db.port)
+        assertEquals(listOf("env"), obj.tags)
+    }
+
+    @Test
+    fun test_getObjectOrNull_noDefaultBlockReturnsNullForAbsentBlock() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val cfg = EnvConfig.initConfig(testConfigO)
+
+        assertNull(cfg.getObjectOrNull("absent", AllDefaultsConfig::class))
+    }
+
+    @Test
     fun test_getObjectOrNull_blockExistence() {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
         val cfg = EnvConfig.initConfig(testConfigL)

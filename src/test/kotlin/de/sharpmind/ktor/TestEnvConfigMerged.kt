@@ -15,6 +15,22 @@ import kotlin.test.*
 class TestEnvConfigMerged {
 
     @Test
+    fun test_merged_withoutDefaultBlockIncludesEnvironmentAndExternalLeaves() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val cfg = EnvConfig.initConfig(testConfigO)
+
+        val merged = cfg.getMergedConfig()
+        assertEquals("env-db.internal", merged["app.db.host"])
+        assertEquals("5432", merged["app.db.port"])
+        assertEquals("900", merged["polling.version_freq_secs"])
+
+        val app = cfg.getMergedConfig("app")
+        assertEquals("env-db.internal", app["db.host"])
+        assertEquals("5432", app["db.port"])
+        assertEquals(listOf("db.host", "db.port", "tags"), app.keys.sorted())
+    }
+
+    @Test
     fun test_merged_default_and_environment() {
         println("Running test: " + object {}.javaClass.enclosingMethod.name)
 

@@ -349,3 +349,17 @@ val testConfigN = HoconApplicationConfig(ConfigFactory.parseString("""
         testEnv { }
     }
 """.trimIndent()))
+
+// TEST CONFIG O: environment-only blocks with no default block
+val testConfigO = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        externalConfigFile = "src/test/resources/test-merge.conf"
+        testEnv {
+            app {
+                db { host = "env-db.internal", port = 5432 }
+                tags = ["env"]
+            }
+        }
+    }
+""".trimIndent()))

@@ -60,7 +60,10 @@ class ConfigCoreImpl : ConfigCore {
         }
 
         var merged: Map<String, Any?> = emptyMap()
-        merged = deepMerge(merged, config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap())
+        val rootConfig = config.config(ROOT_NODE)
+        if (rootConfig.propertyOrNull(DEFAULT_ENVIRONMENT) != null) {
+            merged = deepMerge(merged, rootConfig.config(DEFAULT_ENVIRONMENT).toMap())
+        }
 
         if (environment != DEFAULT_ENVIRONMENT) {
             try {
