@@ -1,6 +1,7 @@
 import io.ktor.server.config.*
 import java.io.File
 import java.net.URL
+import kotlin.reflect.KClass
 
 // Core configuration interfaces
 
@@ -99,5 +100,12 @@ interface UrlConfig {
     fun getUrl(propertyKey: String): URL
     fun getUrlOrNull(propertyKey: String): URL?
     fun getUrlOrDefault(propertyKey: String, defaultVal: URL): URL
+}
+
+/**
+ * Object configuration access - binds a config block to a data class
+ */
+interface ObjectConfig {
+    fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T
 }
 

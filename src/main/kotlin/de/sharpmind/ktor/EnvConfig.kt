@@ -8,15 +8,17 @@ import FileConfig
 import IntConfig
 import ListConfig
 import LongConfig
+import ObjectConfig
 import StringConfig
 import UrlConfig
 import de.sharpmind.ktor.config.*
 import io.ktor.server.config.*
 import java.io.File
 import java.net.URL
+import kotlin.reflect.KClass
 
 // The main EnvConfig class that uses delegation to implement all interfaces
-object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfig, DoubleConfig, ByteConfig, ListConfig, FileConfig, UrlConfig {
+object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfig, DoubleConfig, ByteConfig, ListConfig, FileConfig, UrlConfig, ObjectConfig {
     val loggerName = "de.sharpmind.ktor.EnvConfig"
 
     private val configCore = ConfigCoreImpl()
@@ -29,6 +31,7 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfi
     private val listConfig by lazy { ListConfigImpl(configCore) }
     private val fileConfig by lazy { FileConfigImpl(configCore, stringConfig) }
     private val urlConfig by lazy { UrlConfigImpl(configCore, stringConfig) }
+    private val objectConfig by lazy { ObjectConfigImpl(configCore) }
 
     // Delegate ConfigCore methods
     override fun initConfig(config: ApplicationConfig, verbose: Boolean): EnvConfig =
@@ -100,4 +103,8 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfi
     override fun getUrlOrNull(propertyKey: String): URL? = urlConfig.getUrlOrNull(propertyKey)
     override fun getUrlOrDefault(propertyKey: String, defaultVal: URL): URL =
         urlConfig.getUrlOrDefault(propertyKey, defaultVal)
+
+    // Delegate ObjectConfig methods
+    override fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T =
+        objectConfig.getObject(propertyKey, clazz)
 }

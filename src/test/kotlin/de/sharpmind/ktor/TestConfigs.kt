@@ -207,3 +207,29 @@ val testConfigI = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG for getObject: config block bound to a plain data class
+data class PlainPolling(val statusFreqSecs: Int, val label: String)
+
+val testObjectConfig = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                poll {
+                    statusFreqSecs = 600
+                    label = "poll"
+                }
+            }
+
+            testEnv {
+                poll {
+                    statusFreqSecs = 300
+                }
+            }
+        }
+        """.trimIndent()
+    )
+)
