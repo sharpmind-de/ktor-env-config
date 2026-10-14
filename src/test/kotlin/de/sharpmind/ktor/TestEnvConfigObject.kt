@@ -1,6 +1,8 @@
 package de.sharpmind.ktor
 
+import de.sharpmind.ktor.exceptions.NotInitializedException
 import de.sharpmind.ktor.exceptions.PropertyMissingException
+import de.sharpmind.ktor.exceptions.UnsupportedTypeException
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -14,6 +16,38 @@ import kotlin.test.*
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TestEnvConfigObject {
+
+    // Runs first within the class (NAME_ASCENDING), while the singleton is still uninitialized
+    @Test
+    fun _TestUninitialized_getObject() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        assertFailsWith<NotInitializedException> { EnvConfig.getObject("polling", PollingConfig::class) }
+    }
+
+    @Test
+    fun test_getObject_unsupportedTypeThrows() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val ex = assertFailsWith<UnsupportedTypeException> {
+            EnvConfig.initConfig(testConfigL).getObject("weirdtype", WeirdTypeConfig::class)
+        }
+        assertTrue(ex.message!!.contains("weirdtype"), "message was: ${ex.message}")
+    }
+
+    @Test
+    fun test_getObject_unsupportedListElementTypeThrows() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        assertFailsWith<UnsupportedTypeException> {
+            EnvConfig.initConfig(testConfigN).getObject("intlist", IntListBlock::class)
+        }
+    }
+
+    @Test
+    fun test_getObject_reifiedConvenience() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val viaReified = EnvConfig.initConfig(testConfigK).getObject<PollingConfig>("polling")
+        assertEquals(999, viaReified.statusFreqSecs)
+        assertNull(EnvConfig.getObjectOrNull<AllDefaultsConfig>("noSuchBlock"))
+    }
 
     @Test
     fun test_getObject_fillsClassFromBlock() {
@@ -109,16 +143,5 @@ class TestEnvConfigObject {
         // nested block absent entirely + nullable nested param -> null
         val obj = EnvConfig.initConfig(testConfigM).getObject("bare", BareBlock::class)
         assertNull(obj.db)
-    }
-
-    @Test
-    fun test_getObject_unsupportedListElementTypeIsMissing() {
-        println("Running test: " + object {}.javaClass.enclosingMethod.name)
-        // List<Int> must not receive the List<String> value the dispatcher used to supply;
-        // the unsupported element type reads as missing and hits the default/null/throw rule
-        val ex = assertFailsWith<PropertyMissingException> {
-            EnvConfig.initConfig(testConfigN).getObject("intlist", IntListBlock::class)
-        }
-        assertTrue(ex.message!!.contains("intlist.items"), "message was: ${ex.message}")
     }
 }

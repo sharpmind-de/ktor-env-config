@@ -296,6 +296,7 @@ val testConfigExact = HoconApplicationConfig(
 data class DefaultsConfig(val present: Int, val absent: Int = 42, val maybe: String?, val bad: Int = 42)
 data class RequiredConfig(val requiredValue: Int)
 data class AllDefaultsConfig(val x: Int = 5)
+data class WeirdTypeConfig(val unsupported: Map<String, String>)
 
 val testConfigL = HoconApplicationConfig(ConfigFactory.parseString("""
     envConfig {
@@ -304,6 +305,7 @@ val testConfigL = HoconApplicationConfig(ConfigFactory.parseString("""
             defaults { present = 1, bad = "abc" }
             required { }
             partial { other = 1 }     # block with leaves but without requiredValue — used by Task 4
+            weirdtype { unsupported { key = "value" } }   # configured value of an unsupported type — used by Task 6
         }
         testEnv { }
     }
@@ -335,7 +337,7 @@ val testConfigM = HoconApplicationConfig(ConfigFactory.parseString("""
     }
 """.trimIndent()))
 
-// TEST CONFIG N: unsupported list element type — List<Int> must not bind a List<String> value
+// TEST CONFIG N: unsupported list element type — List<Int> must throw UnsupportedTypeException, not bind a List<String> value
 data class IntListBlock(val items: List<Int>)
 
 val testConfigN = HoconApplicationConfig(ConfigFactory.parseString("""

@@ -110,4 +110,9 @@ object EnvConfig : ConfigCore, StringConfig, BooleanConfig, IntConfig, LongConfi
 
     override fun <T : Any> getObjectOrNull(propertyKey: String, clazz: KClass<T>): T? =
         objectConfig.getObjectOrNull(propertyKey, clazz)
+
+    // Reified convenience overloads: infer the data class from the type argument
+    inline fun <reified T : Any> getObject(propertyKey: String): T = getObject(propertyKey, T::class)
+
+    inline fun <reified T : Any> getObjectOrNull(propertyKey: String): T? = getObjectOrNull(propertyKey, T::class)
 }

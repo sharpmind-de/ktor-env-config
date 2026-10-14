@@ -3,6 +3,7 @@ package de.sharpmind.ktor.config
 import ObjectConfig
 import de.sharpmind.ktor.exceptions.KeyNotFoundException
 import de.sharpmind.ktor.exceptions.PropertyMissingException
+import de.sharpmind.ktor.exceptions.UnsupportedTypeException
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
@@ -37,8 +38,9 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
             // If no candidate resolves, the error points at the snake_case form
             val errorPath = "$propertyKey.${keyCandidates.last()}"
             val value = keyCandidates.firstNotNullOfOrNull { candidate ->
-                // An unparsable value counts as missing. NotInitializedException extends
-                // Throwable, not Exception, so it still propagates out of here.
+                // An unparsable value counts as missing. NotInitializedException and
+                // UnsupportedTypeException extend Throwable, not Exception, so they
+                // still propagate out of here.
                 try {
                     readValue(param, "$propertyKey.$candidate")
                 } catch (e: Exception) {
@@ -90,8 +92,9 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
             classifier == Long::class -> longConfig.getLongOrNull(leafPath)
             classifier == Double::class -> doubleConfig.getDoubleOrNull(leafPath)
             classifier == Float::class -> stringConfig.getStringOrNull(leafPath)?.toFloatOrNull()
-            // Only List<String> is supported: any other element type reads as missing
-            // instead of binding a List<String> value into a differently typed parameter
+            // Only List<String> is supported: any other element type (e.g. List<Int>)
+            // must not bind a List<String> value and falls through to the final else
+            // branch, which throws UnsupportedTypeException
             classifier == List::class && param.type.arguments.singleOrNull()?.type?.classifier == String::class ->
                 listConfig.getListOrNull(leafPath)
             // Nested data class: an absent nested block reads as missing, so the
@@ -100,7 +103,11 @@ class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig {
             classifier is KClass<*> && classifier.primaryConstructor != null ->
                 if (configCore.getMergedConfig(leafPath).isEmpty()) null
                 else getObject(leafPath, classifier)
-            else -> null
+            // Every other classifier is an explicit error instead of falling through
+            // to the missing-value rule; the message names the offending leaf path
+            else -> throw UnsupportedTypeException(
+                "Property type ${param.type} of $leafPath is not supported by getObject"
+            )
         }
     }
 }
