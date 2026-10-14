@@ -4,7 +4,7 @@
 
 **Goal:** Let callers ask `EnvConfig` for an entire config block as a caller-supplied data class, e.g. `EnvConfig.getObject<PollingConfig>("polling")`, filled from default block, environment block, and external config file.
 
-**Architecture:** A new `ObjectConfig` interface (root package, alongside the existing typed interfaces) is delegated from the `EnvConfig` object to a new `ObjectConfigImpl`, following the library's existing per-type-impl pattern. Binding iterates the data class's primary constructor parameters (`kotlin-reflect`), resolves each parameter's leaf key through the existing per-key precedence chain (reusing `StringConfigImpl`/`IntConfigImpl`/… conversion logic), and instantiates via `callBy`, omitting parameters that have constructor defaults.
+**Architecture:** A new `ObjectConfig` interface (in the default package, matching the existing typed interfaces in `interfaces.kt`) is delegated from the `EnvConfig` object to a new `ObjectConfigImpl`, following the library's existing per-type-impl pattern. Binding iterates the data class's primary constructor parameters (`kotlin-reflect`), resolves each parameter's leaf key through the existing per-key precedence chain (reusing `StringConfigImpl`/`IntConfigImpl`/… conversion logic), and instantiates via `callBy`, omitting parameters that have constructor defaults.
 
 **Tech Stack:** Kotlin 2.2.20 / JVM 17, Ktor 3.3.0 `ApplicationConfig`, kotlin-reflect (new dependency), JUnit 4 + kotlin-test.
 
@@ -21,8 +21,8 @@
 - Precedence inside a block follows the existing `getPropertyValue` chain: default block < environment block < external config file.
 - New exceptions live in `src/main/kotlin/de/sharpmind/ktor/exceptions/EnvConfigException.kt` and extend `Throwable`, matching `NotInitializedException`/`KeyNotFoundException`. Messages contain the full leaf path (e.g. `polling.status_enabled`).
 - `NotInitializedException` must propagate from `getObject*` when EnvConfig was not initialized (never be swallowed by the missing-value rule).
-- Follow the existing code patterns: interface in root-package `interfaces.kt`, impl class in `de.sharpmind.ktor.config`, delegation from the `EnvConfig` object, test-only fixtures in `src/test`.
-- TDD strictly: every step's test is written and observed failing before implementation. `./gradlew test` (full suite, currently 31 tests) must stay green at every task boundary. One commit per task.
+- Follow the existing code patterns: interface in the default-package `interfaces.kt`, impl class in `de.sharpmind.ktor.config`, delegation from the `EnvConfig` object, test-only fixtures in `src/test`.
+- TDD strictly: every step's test is written and observed failing before implementation. `./gradlew test` (full suite; baseline after prerequisite #14 is 33 tests) must stay green at every task boundary. One commit per task.
 
 ## Review Focus
 
@@ -42,17 +42,17 @@
 - Modify: `src/main/kotlin/de/sharpmind/ktor/EnvConfig.kt` (object declaration + delegation)
 - Modify: `src/main/kotlin/de/sharpmind/ktor/exceptions/EnvConfigException.kt` (add `PropertyMissingException`)
 - Modify: `build.gradle.kts` (kotlin-reflect dependency)
-- Modify: `src/test/kotlin/de/sharpmind/ktor/TestConfigs.kt` (fixture `testConfigJ`)
+- Modify: `src/test/kotlin/de/sharpmind/ktor/TestConfigs.kt` (fixture `testObjectConfig`)
 - Create: `src/test/kotlin/de/sharpmind/ktor/TestEnvConfigObject.kt`
 
 **Interfaces:**
 - Consumes: `ConfigCoreImpl.getMergedConfig(blockPath: String): Map<String, String>` (from #14), `ConfigCoreImpl.getPropertyValue(propertyKey: String)`, existing `StringConfigImpl`/`BooleanConfigImpl`/`IntConfigImpl`/`LongConfigImpl`/`DoubleConfigImpl`/`ListConfigImpl` constructors `(ConfigCoreImpl)`.
 - Produces:
-  - `interface ObjectConfig { fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T }` (root package; `getObjectOrNull` added in Task 4)
+  - `interface ObjectConfig { fun <T : Any> getObject(propertyKey: String, clazz: KClass<T>): T }` (default package; `getObjectOrNull` added in Task 4)
   - `class ObjectConfigImpl(private val configCore: ConfigCoreImpl) : ObjectConfig` in `de.sharpmind.ktor.config`
   - `class PropertyMissingException(message: String?) : Throwable(message)` in `de.sharpmind.ktor.exceptions`
   - `EnvConfig` implements `ObjectConfig` and delegates to `ObjectConfigImpl`
-  - Test fixture: `data class PlainPolling(val statusFreqSecs: Int, val label: String)` and `val testConfigJ` (block `poll`)
+  - Test fixture: `data class PlainPolling(val statusFreqSecs: Int, val label: String)` and `val testObjectConfig` (block `poll`)
 
 - [ ] **Step 1: Verify prerequisite #14 is merged**
 
@@ -66,7 +66,7 @@ Expected: a match. If not, stop — implement #14 first; nothing in this plan wo
 @Test
 fun test_getObject_fillsClassFromBlock() {
     println("Running test: " + object {}.javaClass.enclosingMethod.name)
-    val obj = EnvConfig.initConfig(testConfigJ).getObject("poll", PlainPolling::class)
+    val obj = EnvConfig.initConfig(testObjectConfig).getObject("poll", PlainPolling::class)
     assertEquals(300, obj.statusFreqSecs)   // env block overrides default (600)
     assertEquals("poll", obj.label)         // default block value
 }
@@ -76,7 +76,7 @@ fun test_getObject_fillsClassFromBlock() {
 // TestConfigs.kt
 data class PlainPolling(val statusFreqSecs: Int, val label: String)
 
-val testConfigJ = HoconApplicationConfig(ConfigFactory.parseString("""
+val testObjectConfig = HoconApplicationConfig(ConfigFactory.parseString("""
     envConfig {
         env = testEnv
         default {
@@ -299,7 +299,7 @@ Expected: FAIL — `absent` throws `PropertyMissingException` (optional/nullable
 
 - [ ] **Step 3: Implement the missing-value rule**
 
-Per parameter, after the read attempt: `if (value != null) args[param] = value` (wrap the read in try/catch: catch `Throwable`, rethrow if it is `NotInitializedException`, otherwise treat as missing — this makes unparsable values count as missing); `else if (param.isOptional)` omit the parameter from `args`; `else if (param.type.isMarkedNullable)` `args[param] = null`; `else throw PropertyMissingException("Property $leafPath does not exist and has no default value")`.
+Per parameter, after the read attempt: `if (value != null) args[param] = value` (wrap the read in try/catch: catch `Exception` and treat it as missing — this makes unparsable values count as missing; `NotInitializedException` extends `Throwable`, not `Exception`, so it propagates); `else if (param.isOptional)` omit the parameter from `args`; `else if (param.type.isMarkedNullable)` `args[param] = null`; `else throw PropertyMissingException("Property $leafPath does not exist and has no default value")`.
 
 - [ ] **Step 4: Run tests to verify they pass, then full suite**
 
@@ -537,7 +537,7 @@ Run: `./gradlew test` → PASS (all)
 
 - [ ] **Step 5: Document in README and CHANGELOG**
 
-README: new subsection under "get configuration properties" titled `#### get configuration objects` showing `EnvConfig.getObject<PollingConfig>("polling")`, the snake_case → camelCase rule, `@SerialName` override, the default→null→throw rule, supported types, and `getObjectOrNull` for absent blocks. CHANGELOG: entry under `## [Unreleased] → ### Added`.
+README: new subsection under "get configuration properties" titled `#### get configuration objects` showing `EnvConfig.getObject<PollingConfig>("polling")`, the snake_case → camelCase rule, `@SerialName` override, the default→null→throw rule, supported types, and `getObjectOrNull` for absent blocks. CHANGELOG: entry under `## [Unreleased] → ### Added`; also ensure `### Breaking` identifies both `ConfigCore.getMergedConfig()` and `ConfigCore.getMergedConfig(blockPath)` as source-incompatible interface additions.
 
 - [ ] **Step 6: Commit**
 
