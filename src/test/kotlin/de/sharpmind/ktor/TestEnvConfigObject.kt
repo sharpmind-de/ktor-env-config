@@ -21,4 +21,27 @@ class TestEnvConfigObject {
         assertEquals(300, obj.statusFreqSecs)   // env block overrides default (600)
         assertEquals("poll", obj.label)         // default block value
     }
+
+    @Test
+    fun test_getObject_fullPrecedenceAndSnakeCaseNaming() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val obj = EnvConfig.initConfig(testConfigK).getObject("polling", PollingConfig::class)
+        assertEquals(999, obj.statusFreqSecs)     // external file beats env (300) beats default (600)
+        assertTrue(obj.statusEnabled)             // default block
+        assertEquals(1200, obj.staleAfterSecs)    // default block
+    }
+
+    @Test
+    fun test_getObject_serialNameOverride() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val obj = EnvConfig.initConfig(testConfigK).getObject("odd", OddConfig::class)
+        assertEquals(7, obj.weirdKey)
+    }
+
+    @Test
+    fun test_getObject_exactKeyWinsOverSnakeCase() {
+        println("Running test: " + object {}.javaClass.enclosingMethod.name)
+        val obj = EnvConfig.initConfig(testConfigExact).getObject("poll", PlainPolling::class)
+        assertEquals(111, obj.statusFreqSecs)     // exact parameter-name key beats snake_case candidate (222)
+    }
 }

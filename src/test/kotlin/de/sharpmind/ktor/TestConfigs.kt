@@ -2,6 +2,7 @@ package de.sharpmind.ktor
 
 import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.*
+import kotlinx.serialization.SerialName
 
 // TEST CONFIG A
 val testConfigA = HoconApplicationConfig(
@@ -228,6 +229,63 @@ val testObjectConfig = HoconApplicationConfig(
                 poll {
                     statusFreqSecs = 300
                 }
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG K: snake_case config keys, external > env > default precedence, @SerialName override
+data class PollingConfig(
+    val statusEnabled: Boolean = false,
+    val versionEnabled: Boolean = false,
+    val statusFreqSecs: Int = 30,
+    val versionFreqSecs: Int = 60,
+    val statusInitialDelaySecs: Int = 0,
+    val versionInitialDelaySecs: Int = 0,
+    val staleAfterSecs: Int = 300
+)
+
+data class OddConfig(@SerialName("odd_name") val weirdKey: Int)
+
+val testConfigK = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        externalConfigFile = "src/test/resources/test-object.conf"
+        default {
+            polling {
+                status_enabled    = true
+                version_enabled   = true
+                status_freq_secs  = 600
+                version_freq_secs = 3600
+                status_initial_delay_secs = 60
+                version_initial_delay_secs = 120
+                stale_after_secs  = 1200
+            }
+            odd { odd_name = 7 }
+        }
+        testEnv {
+            polling { status_freq_secs = 300 }
+        }
+    }
+""".trimIndent()))
+
+// TEST CONFIG K2: exact camelCase parameter-name key must win over the snake_case candidate
+val testConfigExact = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                poll {
+                    statusFreqSecs = 111
+                    status_freq_secs = 222
+                    label = "poll"
+                }
+            }
+
+            testEnv {
             }
         }
         """.trimIndent()
