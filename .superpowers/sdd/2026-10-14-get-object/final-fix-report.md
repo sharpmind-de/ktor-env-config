@@ -34,4 +34,4 @@ These failures reproduce the raw missing-config exception and the swallowed nest
 
 - `git diff --check`: clean.
 - Full suite: `./gradlew test` — successful, 49 tests / 0 failures / 0 errors.
-- Commit: recorded below after the fix commit is created.
+- Fix + tests + README/CHANGELOG commit: `188248c`.
