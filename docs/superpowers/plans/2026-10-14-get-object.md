@@ -266,7 +266,7 @@ fun test_getObject_missingProperty_defaultOrNullOrThrow() {
 
     // absent, no default, non-nullable -> PropertyMissingException naming the leaf path
     val ex = assertFailsWith<PropertyMissingException> { cfg.getObject("required", RequiredConfig::class) }
-    assertTrue(ex.message!!.contains("required.requiredValue"), "message was: ${ex.message}")
+    assertTrue(ex.message!!.contains("required.required_value"), "message was: ${ex.message}")
 
     // getObject never returns null: absent block with all defaults -> defaults object
     assertEquals(5, cfg.getObject("noSuchBlock", AllDefaultsConfig::class).x)
