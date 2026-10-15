@@ -2,6 +2,7 @@ package de.sharpmind.ktor
 
 import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.*
+import kotlinx.serialization.SerialName
 
 // TEST CONFIG A
 val testConfigA = HoconApplicationConfig(
@@ -157,3 +158,208 @@ val testConfigH = HoconApplicationConfig(
         """.trimIndent()
     )
 )
+
+// TEST CONFIG J: nested config with default, environment, and external overrides
+val testConfigJ = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+            externalConfigFile = "src/test/resources/test-merge.conf"
+
+            default {
+                a = 1
+                polling {
+                    status_enabled = true
+                    status_freq_secs = 600
+                    version_freq_secs = 3600
+                    stale_after_secs = 1200
+                }
+            }
+
+            testEnv {
+                polling {
+                    status_freq_secs = 300
+                    version_freq_secs = 1800
+                }
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG I: external config file that does not exist
+val testConfigI = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+            externalConfigFile = "src/test/resources/does-not-exist.conf"
+
+            default {
+                a = 1
+                b = false
+            }
+
+            testEnv {
+                a = 2
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG for getObject: config block bound to a plain data class
+data class PlainPolling(val statusFreqSecs: Int, val label: String)
+
+val testObjectConfig = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                poll {
+                    statusFreqSecs = 600
+                    label = "poll"
+                }
+            }
+
+            testEnv {
+                poll {
+                    statusFreqSecs = 300
+                }
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG K: snake_case config keys, external > env > default precedence, @SerialName override
+data class PollingConfig(
+    val statusEnabled: Boolean = false,
+    val versionEnabled: Boolean = false,
+    val statusFreqSecs: Int = 30,
+    val versionFreqSecs: Int = 60,
+    val statusInitialDelaySecs: Int = 0,
+    val versionInitialDelaySecs: Int = 0,
+    val staleAfterSecs: Int = 300
+)
+
+data class OddConfig(@SerialName("odd_name") val weirdKey: Int)
+
+val testConfigK = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        externalConfigFile = "src/test/resources/test-object.conf"
+        default {
+            polling {
+                status_enabled    = true
+                version_enabled   = true
+                status_freq_secs  = 600
+                version_freq_secs = 3600
+                status_initial_delay_secs = 60
+                version_initial_delay_secs = 120
+                stale_after_secs  = 1200
+            }
+            odd { odd_name = 7 }
+        }
+        testEnv {
+            polling { status_freq_secs = 300 }
+        }
+    }
+""".trimIndent()))
+
+// TEST CONFIG K2: exact camelCase parameter-name key must win over the snake_case candidate
+val testConfigExact = HoconApplicationConfig(
+    ConfigFactory.parseString(
+        """
+        envConfig {
+            env = testEnv
+
+            default {
+                poll {
+                    statusFreqSecs = 111
+                    status_freq_secs = 222
+                    label = "poll"
+                }
+            }
+
+            testEnv {
+            }
+        }
+        """.trimIndent()
+    )
+)
+
+// TEST CONFIG L: missing-property rule — constructor defaults, nullable null, unparsable-as-missing
+data class DefaultsConfig(val present: Int, val absent: Int = 42, val maybe: String?, val bad: Int = 42)
+data class RequiredConfig(val requiredValue: Int)
+data class AllDefaultsConfig(val x: Int = 5)
+data class WeirdTypeConfig(val unsupported: Map<String, String>)
+
+val testConfigL = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            defaults { present = 1, bad = "abc" }
+            required { }
+            partial { other = 1 }     # block with leaves but without requiredValue — used by Task 4
+            weirdtype { unsupported { key = "value" } }   # configured value of an unsupported type — used by Task 6
+        }
+        testEnv { }
+    }
+""".trimIndent()))
+
+// TEST CONFIG M: List<String> and nested data-class getObject binding
+data class DbConfig(val host: String, val port: Int = 5432)
+data class AppBlock(val db: DbConfig, val tags: List<String>)
+data class BareBlock(val db: DbConfig?)
+data class NestBlock(val db: DbConfig)
+
+val testConfigM = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            app {
+                db { host = "db.internal" }
+                tags = ["a", "b", "c"]
+            }
+            bare { }
+            nest { db { port = 1 } }
+        }
+        testEnv {
+            app {
+                db { port = 1234 }
+                tags = "x,y,z"
+            }
+        }
+    }
+""".trimIndent()))
+
+// TEST CONFIG N: unsupported list element type — List<Int> must throw UnsupportedTypeException, not bind a List<String> value
+data class IntListBlock(val items: List<Int>)
+
+val testConfigN = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        default {
+            intlist { items = [1, 2, 3] }
+        }
+        testEnv { }
+    }
+""".trimIndent()))
+
+// TEST CONFIG O: environment-only blocks with no default block
+val testConfigO = HoconApplicationConfig(ConfigFactory.parseString("""
+    envConfig {
+        env = testEnv
+        externalConfigFile = "src/test/resources/test-merge.conf"
+        testEnv {
+            app {
+                db { host = "env-db.internal", port = 5432 }
+                tags = ["env"]
+            }
+        }
+    }
+""".trimIndent()))

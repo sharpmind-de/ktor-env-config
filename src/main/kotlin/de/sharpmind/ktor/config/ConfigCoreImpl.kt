@@ -32,14 +32,15 @@ class ConfigCoreImpl : ConfigCore {
 
             logger.info("Initializing EnvConfig with environment: $environment")
 
-            // set external config file if configured and existent
+            // A missing or unsupported external config file is not an error:
+            // log a warning and continue without external overrides
             this.extConfig = null
             config.propertyOrNull("$ROOT_NODE.$EXT_CONFIG_NODE")?.getString()?.let { externalFilePath ->
-                HoconConfigLoader().load(externalFilePath)?.let { externalConfig ->
+                val externalConfig = HoconConfigLoader().load(externalFilePath)
+                if (externalConfig != null) {
                     extConfig = externalConfig
-                } ?: {
-                    logger.warn("External config file $externalFilePath not found or not supported")
-                    throw NotInitializedException("External config file $externalFilePath not found or not supported")
+                } else {
+                    logger.warn("External config file $externalFilePath not found or not supported - continuing without external overrides")
                 }
             }
 
@@ -50,6 +51,71 @@ class ConfigCoreImpl : ConfigCore {
 
     override fun getExternalConfigFile(): String? = getPropertyValue(ROOT_NODE, EXT_CONFIG_NODE)?.getString()
 
+    override fun getMergedConfig(): Map<String, String> = getMergedConfig("")
+
+    override fun getMergedConfig(blockPath: String): Map<String, String> {
+        if (!::config.isInitialized) {
+            logger.warn("EnvConfig not initialized yet")
+            throw NotInitializedException("Not initialized yet")
+        }
+
+        var merged: Map<String, Any?> = emptyMap()
+        val rootConfig = config.config(ROOT_NODE)
+        if (rootConfig.propertyOrNull(DEFAULT_ENVIRONMENT) != null) {
+            merged = deepMerge(merged, rootConfig.config(DEFAULT_ENVIRONMENT).toMap())
+        }
+
+        if (environment != DEFAULT_ENVIRONMENT) {
+            try {
+                merged = deepMerge(merged, config.config(ROOT_NODE).config(environment).toMap())
+            } catch (e: Exception) {
+                logger.warn("No config found for environment $environment. Using default config.")
+            }
+        }
+
+        // external config file has the highest priority
+        extConfig?.let { merged = deepMerge(merged, it.toMap()) }
+
+        val flattened = flatten(merged)
+        if (blockPath.isEmpty()) return flattened
+
+        val prefix = "$blockPath."
+        return flattened
+            .filterKeys { it.startsWith(prefix) }
+            .mapKeys { (key, _) -> key.removePrefix(prefix) }
+    }
+
+    private fun deepMerge(base: Map<String, Any?>, override: Map<String, Any?>): Map<String, Any?> {
+        val result = base.toMutableMap()
+        override.forEach { (key, value) ->
+            val baseValue = result[key]
+            result[key] = if (baseValue is Map<*, *> && value is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                deepMerge(baseValue as Map<String, Any?>, value as Map<String, Any?>)
+            } else {
+                value
+            }
+        }
+        return result
+    }
+
+    private fun flatten(
+        values: Map<String, Any?>,
+        prefix: String = "",
+        result: MutableMap<String, String> = mutableMapOf()
+    ): Map<String, String> {
+        values.forEach { (key, value) ->
+            val path = if (prefix.isEmpty()) key else "$prefix.$key"
+            if (value is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                flatten(value as Map<String, Any?>, path, result)
+            } else if (value != null) {
+                result[path] = value.toString()
+            }
+        }
+        return result
+    }
+
     override fun dumpConfig() {
         if (!::config.isInitialized) {
             logger.warn("EnvConfig not initialized yet")
@@ -58,22 +124,7 @@ class ConfigCoreImpl : ConfigCore {
 
         logger.info("--- Dumping configuration for environment: $environment ---")
 
-        val mergedConfig = mutableMapOf<String, String>()
-
-        config.config(ROOT_NODE).config(DEFAULT_ENVIRONMENT).toMap().forEach { (k, v) ->
-            mergedConfig[k] = v.toString()
-        }
-
-        // merge the default config with the environment config
-        if (environment != DEFAULT_ENVIRONMENT) {
-            try {
-                config.config(ROOT_NODE).config(environment).toMap().forEach { (k, v) ->
-                    mergedConfig[k] = v.toString()
-                }
-            } catch (e: Exception) {
-                logger.warn("No config found for environment $environment. Using default config.")
-            }
-        }
+        val mergedConfig = getMergedConfig()
 
         logger.info("Environment: $environment")
         logger.info("External config file: ${getExternalConfigFile() ?: "none"}")

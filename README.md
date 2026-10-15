@@ -255,6 +255,22 @@ EnvConfig.getLongOrDefault(key: String, defaultVal: Long): Long
 EnvConfig.getDoubleOrDefault(key: String, defaultVal: Double): Double
 ```
 
+#### get configuration objects
+
+A whole config block can be bound to a data class with `getObject`. The reified convenience overload infers the class from the type argument (an explicit class reference `EnvConfig.getObject("polling", PollingConfig::class)` works too):
+
+```
+data class PollingConfig(val statusFreqSecs: Int = 30, val statusEnabled: Boolean = false)
+
+val polling = EnvConfig.getObject<PollingConfig>("polling")
+```
+
+- **Naming (snake_case → camelCase)**: config keys are snake_case (`status_freq_secs`), constructor parameters are camelCase (`statusFreqSecs`). For each constructor parameter the exact parameter name is tried first, then its snake_case form. An explicit `@SerialName("custom_key")` on the parameter or property replaces both candidates and is the only key looked up.
+- **Missing values (default → null → throw)**: for each constructor parameter the value is bound if it exists in the config; otherwise a constructor default is applied if present; otherwise `null` is bound for a nullable parameter; otherwise `PropertyMissingException` is thrown, naming the missing snake_case key. An unparsable value counts as missing.
+- **Supported types**: `String`, `Boolean`, `Int`, `Long`, `Double`, `Float`, `List<String>`, nested data classes, and their nullable versions (nested data classes follow the same default → null → throw rule using the nested block). Any other type (e.g. `Map<String, String>` or `List<Int>`) throws `UnsupportedTypeException`.
+- **Absent blocks**: `getObject` has no special case for an absent block — it always builds the object through the same default → null → throw rule, so a required non-nullable parameter without a default throws `PropertyMissingException` even when the whole block is missing. Use `EnvConfig.getObjectOrNull<PollingConfig>("polling")` to distinguish a block with no leaf keys (`null`, whether absent or empty) from a block with leaf keys, which may still throw for missing required properties.
+- Calling either method before `initConfig` throws `NotInitializedException` when the method needs to read configuration; a zero-parameter data class can be returned by `getObject` without initialization.
+
 ### type evaluation
 
 #### boolean
@@ -326,6 +342,10 @@ EnvConfig.getEnvironment(): String
 
 # returns a configured external config file, or null if none is configured
 EnvConfig.getExternalConfigFile(): String?
+
+# returns the full merged configuration as a flat map of property keys to string values
+# merge order (lowest to highest priority): default block, environment block, external config file
+EnvConfig.getMergedConfig(): Map<String, String>
 ```
 
 ### set ENVIRONMENT environment variable
