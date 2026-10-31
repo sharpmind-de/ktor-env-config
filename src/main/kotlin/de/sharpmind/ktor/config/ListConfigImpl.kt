@@ -1,7 +1,6 @@
 package de.sharpmind.ktor.config
 
 import ListConfig
-import com.typesafe.config.ConfigException
 import de.sharpmind.ktor.exceptions.KeyNotFoundException
 import io.ktor.server.config.*
 
@@ -15,12 +14,16 @@ class ListConfigImpl(private val configCore: ConfigCoreImpl) : ListConfig {
     private fun getListDelimiter(): String =
         configCore.getPropertyValue(LIST_DELIMITER_KEY)?.getString()?.takeIf { it.isNotEmpty() } ?: ","
 
+    /**
+     * Branch on [ApplicationConfigValue.type] instead of catching [com.typesafe.config.ConfigException].
+     * Ktor 3.2 and 3.4 throw that exception from [ApplicationConfigValue.getList] for a plain string.
+     * Ktor 3.6 wraps it in [ApplicationConfigurationException], so the string would never be split.
+     * `type` has been part of ApplicationConfigValue since Ktor 3.2.
+     */
     private fun parseListValue(value: ApplicationConfigValue): List<String>? =
-        try {
-            value.getList()
-        } catch (_: ConfigException) {
-            val delimiter = getListDelimiter()
-            value.getString().split(delimiter).map { it.trim() }
+        when (value.type) {
+            ApplicationConfigValue.Type.LIST -> value.getList()
+            else -> value.getString().split(getListDelimiter()).map { it.trim() }
         }
 
     override fun getList(propertyKey: String): List<String> {

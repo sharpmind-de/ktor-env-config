@@ -43,6 +43,8 @@ In your `build.gradle.kts`, add:
 
 Replace `<version>` by one [release version](https://github.com/sharpmind-de/ktor-env-config/releases) of the project.
 
+The library depends on `io.ktor:ktor-server-core` with version range `[3.2.0, 3.7.0)`, so one artifact is compatible with Ktor 3.2.x, 3.4.x, and 3.6.x. It does not require a specific 3.6 patch.
+
 Breaking changes are documented in [CHANGELOG.md](CHANGELOG.md) and in the [GitHub release notes](https://github.com/sharpmind-de/ktor-env-config/releases) for each version.
 
 Current Release:
@@ -326,7 +328,22 @@ EnvConfig.getEnvironment(): String
 
 # returns a configured external config file, or null if none is configured
 EnvConfig.getExternalConfigFile(): String?
+
+# logs the merged default and environment blocks
+# secret values are written as **** (see below)
+EnvConfig.dumpConfig()
 ```
+
+`initConfig(config, verbose = true)` calls `dumpConfig()`. Values are masked when the key name, or a nested name such as `db.password`, matches one of these case-insensitively: `password`, `passwd`, `secret`, `token`, `api_key` (also `apiKey` / `apikey`), `credential`, `private_key` (also `privateKey` / `privatekey`). Parts separated by `_`, `-`, or camel case are matched the same way, so `client_secret` and `accessToken` are masked. Names that only share a prefix (`secretary`, `tokenizer`, `passwordless`) are not.
+
+Add further names with `envConfig.secretKeys`, next to `env` (not inside an environment block), either as a list or a comma-separated string:
+
+```
+envConfig.secretKeys = ["pin", "ssn"]
+envConfig.secretKeys = "pin, ssn"
+```
+
+`getString` and the other getters still return the real values.
 
 ### set ENVIRONMENT environment variable
 
