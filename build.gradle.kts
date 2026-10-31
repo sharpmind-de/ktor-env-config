@@ -62,6 +62,9 @@ java {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+    // Rich version covering Ktor 3.2.x–3.6.x. Only ApplicationConfig APIs present since 3.2 are used
+    // (property/propertyOrNull, config, keys, toMap, getString, getList). ApplicationConfig.getAs,
+    // added in later 3.x, is intentionally not used.
     implementation("io.ktor:ktor-server-core:$ktor3_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
@@ -93,6 +96,29 @@ publishing {
                     connection.set("scm:git:https://github.com/sharpmind-de/ktor-env-config.git")
                     developerConnection.set("scm:git:https://github.com/sharpmind-de/ktor-env-config.git")
                     url.set("https://github.com/sharpmind-de/ktor-env-config")
+                }
+                // Gradle writes the resolved Ktor version into the POM (currently the newest 3.6.x).
+                // Publish the compatibility range instead, so Maven consumers are not pinned to one patch.
+                // Gradle module metadata already records `requires: [3.2.0,3.7.0)`.
+                withXml {
+                    val dependencies = asElement().getElementsByTagName("dependency")
+                    for (i in 0 until dependencies.length) {
+                        val dependency = dependencies.item(i)
+                        var artifactId: String? = null
+                        var versionNode: org.w3c.dom.Node? = null
+                        val children = dependency.childNodes
+                        for (j in 0 until children.length) {
+                            val child = children.item(j)
+                            if (child.nodeType != org.w3c.dom.Node.ELEMENT_NODE) continue
+                            when (child.nodeName) {
+                                "artifactId" -> artifactId = child.textContent
+                                "version" -> versionNode = child
+                            }
+                        }
+                        if (artifactId == "ktor-server-core" || artifactId == "ktor-server-core-jvm") {
+                            versionNode?.textContent = ktor3_version
+                        }
+                    }
                 }
             }
         }
